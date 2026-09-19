@@ -7,7 +7,7 @@ import type { PairingFailure } from '../src/controller/types.js';
 describe('pairing / auth pages (B1)', () => {
   it('offers Add computer in the selector and returns to existing pairings on cancel', async () => {
     const user = userEvent.setup();
-    const { controller } = renderApp();
+    const { controller } = renderApp({});
     const hosts = controller.state.hosts;
     await user.click(screen.getByRole('button', { name: '切换 Host' }));
     await user.click(screen.getByRole('menuitem', { name: '添加电脑' }));

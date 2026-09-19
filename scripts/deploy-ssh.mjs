@@ -30,7 +30,7 @@ export function deploySsh(receiptPath, env = process.env) {
   try {
     writeFileSync(key, env.REMOTE_SSH_PRIVATE_KEY + '\n', { mode: 0o600, flag: 'wx' });
     writeFileSync(known, env.REMOTE_SSH_KNOWN_HOSTS + '\n', { mode: 0o600, flag: 'wx' });
-    const common = ['-i', key, '-o', `UserKnownHostsFile=${known}`, '-o', 'StrictHostKeyChecking=yes', '-o', 'BatchMode=yes', '-o', 'ConnectTimeout=15'];
+    const common = ['-F', '/dev/null', '-i', key, '-o', 'IdentitiesOnly=yes', '-o', `UserKnownHostsFile=${known}`, '-o', 'StrictHostKeyChecking=yes', '-o', 'BatchMode=yes', '-o', 'ConnectTimeout=15'];
     const destination = `${target.user}@${target.host}`;
     if (env.REMOTE_SSH_MODE === 'restricted') {
       if (!/^[A-Za-z0-9][A-Za-z0-9_-]*$/.test(env.REMOTE_REGISTRY_USER ?? '') || !env.REMOTE_REGISTRY_TOKEN || /[\r\n]/.test(env.REMOTE_REGISTRY_TOKEN) || env.REMOTE_REGISTRY_TOKEN.length > 8192) throw new Error('Restricted deployment requires short-lived registry authentication');

@@ -2,7 +2,7 @@
   "schema": 1,
   "product": "Gian Remote",
   "sourceRepository": "RichLogic/Gian-Dev",
-  "sourceCommit": "b880cd7cbb845057f6f7113f7c9b322c8fe8b758",
+  "sourceCommit": "0868d31d0aa37970db7b5cea4a19f511e22a7e4c",
   "workingTree": false,
   "sharedPackages": [
     "shared",
@@ -100,7 +100,7 @@
     {
       "source": "delivery/remote/scripts/deploy-ssh.mjs",
       "path": "scripts/deploy-ssh.mjs",
-      "sha256": "a32ed7fe2acc18ecdb84b6e820e62937a1dc9f3eb38271d978148239577b6be0"
+      "sha256": "b987ff66102c84e726648365d949d5af1f1a795e063c35c9f3a6d2e0e4eaab74"
     },
     {
       "source": "delivery/remote/scripts/deploy.sh",
@@ -585,7 +585,7 @@
     {
       "source": "packages/remote-web/src/controller/production.ts",
       "path": "packages/remote-web/src/controller/production.ts",
-      "sha256": "4f7aac6144edba49b5028be77de6ae221ad593af50d8eaf19100b04c05e1478f"
+      "sha256": "e5b213472bb4c850f131698a0b05601f7e5471d213bb3641948306da51378285"
     },
     {
       "source": "packages/remote-web/src/controller/session-send.ts",
@@ -875,7 +875,7 @@
     {
       "source": "packages/remote-web/test/production-ops.test.ts",
       "path": "packages/remote-web/test/production-ops.test.ts",
-      "sha256": "3488319d424a98149148c24250db088d837253581f76c9dea8057f9e6b9734ac"
+      "sha256": "855021ee53dd637e72a807e19e449b920b40ed47f54d749dc93380c64db3af12"
     },
     {
       "source": "packages/remote-web/test/queue.test.tsx",
@@ -1592,7 +1592,7 @@
     {
       "path": "packages/remote-web/src/controller/production.ts",
       "mode": 420,
-      "sha256": "4f7aac6144edba49b5028be77de6ae221ad593af50d8eaf19100b04c05e1478f"
+      "sha256": "e5b213472bb4c850f131698a0b05601f7e5471d213bb3641948306da51378285"
     },
     {
       "path": "packages/remote-web/src/controller/session-send.ts",
@@ -1882,7 +1882,7 @@
     {
       "path": "packages/remote-web/test/production-ops.test.ts",
       "mode": 420,
-      "sha256": "3488319d424a98149148c24250db088d837253581f76c9dea8057f9e6b9734ac"
+      "sha256": "855021ee53dd637e72a807e19e449b920b40ed47f54d749dc93380c64db3af12"
     },
     {
       "path": "packages/remote-web/test/queue.test.tsx",
@@ -2142,7 +2142,7 @@
     {
       "path": "scripts/deploy-ssh.mjs",
       "mode": 420,
-      "sha256": "a32ed7fe2acc18ecdb84b6e820e62937a1dc9f3eb38271d978148239577b6be0"
+      "sha256": "b987ff66102c84e726648365d949d5af1f1a795e063c35c9f3a6d2e0e4eaab74"
     },
     {
       "path": "scripts/deploy.sh",

@@ -1202,12 +1202,13 @@ describe('production controller operations', () => {
     controller.actions.selectHost(hostB);
     await viWait(async () => controller.state.connection.kind === 'online' && controller.state.currentHostId === hostB);
     expect(controller.state.mutations[commandId]?.phase).toBe('unknown');
-    expect(controller.state.unknownCommandId).toBe(commandId);
+    expect(controller.state.unknownCommandId).toBeNull();
     const hostBStatus = (relays.get(hostB)?.sent ?? []).filter((message) => (
       message.type === 'command.request' && message.method === 'command.status'
     ));
     expect(hostBStatus).toEqual([]);
     controller.actions.selectHost(hostId);
+    expect(controller.state.unknownCommandId).toBe(commandId);
     await viWait(async () => (
       (relays.get(hostId)?.sent ?? []).some((message) => (
         message.type === 'command.request'

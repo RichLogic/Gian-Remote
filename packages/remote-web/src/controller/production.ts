@@ -276,12 +276,15 @@ export function createProductionController(options: ProductionControllerOptions)
     runtime.lastEventSequence = -1;
     runtime.snapshotRevision = '';
     runtime.hostGeneration = '';
+    const unknownCommandId = runtime.recoverable.find(command => (
+      showsUnknownOutcome(command.method) && state.mutations[command.commandId]?.phase === 'unknown'
+    ))?.commandId ?? null;
     update({ currentHostId: hostId, connection: { kind: 'resyncing', synced: 0, total: 1 },
       auth: { kind: 'challenge-login', hosts: state.hosts }, snapshotReceivedAt: null,
       mobilePage: 'chat', fileViewer: null, view: { kind: 'empty' },
       tasks: [], sessions: [], workspaces: [], interactions: [], capabilities: {},
       catalog: null, catalogInvalidated: true, transcripts: {}, drafts,
-      queueNotice: null, unknownCommandId: null, interactionErrors: {}, interactionPhases: {},
+      queueNotice: null, unknownCommandId, interactionErrors: {}, interactionPhases: {},
       fileDownload: { status: 'idle' } });
   }
 
@@ -419,7 +422,7 @@ export function createProductionController(options: ProductionControllerOptions)
         'unknown',
         'UNKNOWN_OUTCOME',
         'disconnected before result',
-        showsUnknownOutcome(command.method),
+        showsUnknownOutcome(command.method) && state.currentHostId === hostId,
       );
     }
     for (const [transferId, waiter] of [...uploadWaiters]) {

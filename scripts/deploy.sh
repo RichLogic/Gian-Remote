@@ -16,10 +16,13 @@ exec 9>deploy.lock
 flock -n 9 || { echo 'Another Remote deployment is running'; exit 75; }
 umask 077
 port=${REMOTE_PORT:-8787}
+project=${REMOTE_COMPOSE_PROJECT:-gian-remote}
+volume=${REMOTE_DATA_VOLUME:-${project}_remote-data}
+[[ "$project" =~ ^[a-z0-9][a-z0-9_-]*$ && "$volume" =~ ^[a-zA-Z0-9][a-zA-Z0-9_.-]*$ ]] || exit 64
 [[ "$port" =~ ^[0-9]+$ && "$port" -ge 1024 && "$port" -le 65535 ]] || exit 64
-printf 'REMOTE_IMAGE=%s\nREMOTE_RUNTIME_ENV=%s/runtime.env\nREMOTE_PORT=%s\n' "$image" "$base" "$port" > "$release/deploy.env"
+printf 'REMOTE_IMAGE=%s\nREMOTE_RUNTIME_ENV=%s/runtime.env\nREMOTE_PORT=%s\nREMOTE_DATA_VOLUME=%s\n' "$image" "$base" "$port" "$volume" > "$release/deploy.env"
 printf '%s\n' "$schema" > "$release/data-schema"
-compose() { docker compose --project-name gian-remote --env-file "$1/deploy.env" -f "$1/compose.yaml" "${@:2}"; }
+compose() { docker compose --project-name "$project" --env-file "$1/deploy.env" -f "$1/compose.yaml" "${@:2}"; }
 healthy() {
   local directory=$1 id state
   for ((attempt=0; attempt<${REMOTE_DEPLOY_HEALTH_ATTEMPTS:-30}; attempt++)); do
@@ -71,13 +74,14 @@ if [[ -n "$previous" ]]; then
   mkdir -p "$backup"
   # The old process is stopped: SQLite, WAL and server identity are a consistent set.
   docker run --rm --network none --user 0 --entrypoint tar \
-    -v gian-remote_remote-data:/data:ro -v "$backup:/backup" \
+    -v "$volume:/data:ro" -v "$backup:/backup" \
     "$image" -czf /backup/data.tar.gz -C /data .
 fi
 changed=1
 compose "$release" up -d --no-build remote
 healthy "$release"
-ln -s "releases/$revision" "$base/current.next"
-mv -Tf "$base/current.next" "$base/current"
+next="$base/current.next.$revision.$$"
+ln -s "releases/$revision" "$next"
+mv -Tf "$next" "$base/current"
 changed=0
 echo "Remote deployment healthy: $revision"

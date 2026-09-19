@@ -8,9 +8,6 @@
       "path": "./packages/chat-ui"
     },
     {
-      "path": "./packages/remote-protocol"
-    },
-    {
       "path": "./packages/remote-server"
     },
     {

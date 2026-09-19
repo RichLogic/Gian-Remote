@@ -15,11 +15,69 @@ pnpm typecheck
 pnpm test
 ```
 
-The workspace contains remote-server, remote-web, remote-protocol, shared and
-chat-ui. It does not require a checkout of Gian, Electron or any Provider Proxy.
+The workspace contains remote-server, remote-web, shared and chat-ui.
+`@gian/remote-protocol` is an external package published by public
+[Gian](https://github.com/RichLogic/Gian), not a source directory in this repo.
+It does not require access to private GianDev, a checkout of the whole Gian
+repository, Electron or any Provider Proxy.
 GianDev retains the shared source-scan and Host/Web cross-product integration
 tests. Public Remote CI runs all Remote package tests and deployment-script
 regression, and builds/boots the real container.
+
+## Remote Protocol dependency
+
+The protocol source and public release entrypoint belong to Gian at
+`packages/remote-protocol`. Pushing an immutable `remote-protocol-vX.Y.Z` tag
+triggers its dedicated package workflow. Only after qualification succeeds does
+the GitHub Release contain the installable `.tgz`, coordinate and checksums.
+The protocol release never becomes the Desktop application's latest release.
+
+For example, after version 1.0.0 is actually published:
+
+```sh
+npm install https://github.com/RichLogic/Gian/releases/download/remote-protocol-v1.0.0/gian-remote-protocol-1.0.0.tgz
+```
+
+This is a normal package named `@gian/remote-protocol`; imports use that name.
+It is a GitHub Release archive, not an npm Registry publication. A Git tag alone
+is not an installable package, and `npm install @gian/remote-protocol@1.0.0`
+would require a separate Registry publication.
+
+The generated package.json files use the exact public Gian archive URL.
+pnpm-lock.yaml records the same URL and SHA-512 integrity; protocol-package.json
+also records SHA-256, size and public source commit. No GitHub token is required
+to download the public package. Do not substitute a mutable branch, latest URL,
+private GianDev reference or a temporary signed CDN URL.
+
+The exporter refuses a pending first publication. Import real release metadata
+after verifying the published tag and archive, then export again; never invent
+an archive digest to make a not-yet-published dependency appear installable.
+See [pnpm's supported package sources](https://pnpm.io/cli/add#supported-package-sources).
+
+## Connect a Gian computer
+
+With the Remote Server running, create a one-time enrollment token inside its
+service environment:
+
+```sh
+gian-remote-server enrollment create --label 'Home Mac'
+# For the shipped Compose service:
+docker compose exec remote gian-remote-server enrollment create --label 'Home Mac'
+```
+
+The command prints the Server URL, token and expiry. Enter these in Gian's
+Settings → Remote within 10 minutes. The token is single-use; normal reconnects
+do not need another. The CLI uses the existing local admin API and the server's
+`GIAN_REMOTE_ADMIN_TOKEN`, without printing the admin key. Run it inside the
+container/service environment; public proxies should keep the admin API blocked.
+
+Once connected, rename the computer in Gian if needed and generate a device
+pairing QR/link. A browser may pair with several computers independently and
+switch using the Host menu. Open invitations in the browser you want to use
+before confirming. Pairing still requires approval on the corresponding Mac.
+
+Deploy a Server supporting `/api/v1/host/profile` before a Desktop offering
+Rename. Names are metadata; renaming preserves Host identity and pairings.
 
 ## Stable release
 
@@ -36,6 +94,10 @@ image digest and the database migration fingerprint. A published tag cannot
 be rebuilt through this release entrypoint. Deployment retries consume the
 published receipt and never rebuild an image.
 
+The runtime bundle copies the frozen install's actual production dependency
+graph and native build outputs. It does not resolve semver ranges again or
+depend on package metadata in a developer's pnpm cache.
+
 Release Remote directly calls Deploy Remote after publication. A release
 created with GITHUB_TOKEN does not normally trigger another event workflow;
 this direct call avoids a missing deployment. Deploy Remote also handles
@@ -48,8 +110,10 @@ See [GitHub workflow trigger behavior](https://docs.github.com/en/actions/how-to
 Use a dedicated Linux host/account with Docker Engine, Docker Compose v2,
 `flock`, tar and SSH. The account must be allowed to run Docker. No inbound
 Agent or workspace access is required. The server must be able to pull the
-image from GHCR: either make the image package public or configure a read-only
-registry login on that machine. CI does not copy a registry token to it.
+image from GHCR. In upload mode, either make the image package public or
+configure a read-only registry login on the machine. Restricted mode uses the
+current workflow's short-lived packages:read token on stdin and removes its
+temporary Docker authentication directory when deployment finishes.
 
 Choose a dedicated directory, for example `/opt/gian-remote`. It must be
 writable by the deployment account. Install `runtime.env` there with mode
@@ -57,11 +121,28 @@ writable by the deployment account. Install `runtime.env` there with mode
 token and the real HTTPS origin; do not put those secrets in Git or Actions
 logs. The data volume preserves pairing records and the server identity.
 
-If the machine already runs Remote outside this Compose project, first plan
-the migration of its complete stopped data directory (including SQLite/WAL
-and server-identity.json) into the managed volume. A fresh empty volume creates
-a new identity. This workflow does not stop or adopt an unrelated existing
-service automatically.
+For an existing Compose-managed Remote, prefer preserving its project and data
+volume. An administrator can prepare a separate deployment directory with
+`scripts/prepare-existing.py --container <name> --directory <new-path> --tooling <staging-directory>`.
+The staging directory must contain compose.yaml, deploy.sh and ssh-entrypoint.sh.
+The helper refuses an existing destination, reads the healthy container and
+original Compose configuration, and records its exact image and migration set
+for rollback. Runtime secrets stay on the server in mode-0600 files. It neither
+restarts the container nor copies/modifies its data volume. Nonstandard ports,
+bind-mounted data or unavailable original configuration require explicit review.
+
+In restricted mode, install a new deployment-only public key in authorized_keys
+with `restrict` and a fixed forced command, for example:
+
+```text
+restrict,command="/bin/bash /srv/gian-remote-ci/tooling/ssh-entrypoint.sh /srv/gian-remote-ci current current_remote-data" ssh-ed25519 <deployment-public-key> gian-remote-ci
+```
+
+Use the actual project and volume from adoption.json. The key permits only
+`health` and a validated `deploy <commit> <owned-image-digest> <migration-hash>`
+operation. It cannot request a shell, upload scripts, or forward ports. The
+administrator maintains the root-owned deployment tooling; CI only supplies
+release identities. Never upload a personal SSH private key to GitHub.
 
 Remote binds only `127.0.0.1:8787` on the host by default. Configure your HTTPS
 reverse proxy to forward HTTP and WebSocket upgrades there; set appropriate
@@ -77,6 +158,7 @@ In GitHub configure environment **remote-production**:
 | Variable | REMOTE_SSH_USER | Dedicated deployment user |
 | Variable | REMOTE_SSH_PORT | SSH port; default 22 |
 | Variable | REMOTE_DEPLOY_DIR | Dedicated absolute directory |
+| Variable | REMOTE_SSH_MODE | `restricted` for a forced-command key; `upload` for the original installer flow |
 | Secret | REMOTE_SSH_PRIVATE_KEY | Deployment SSH private key |
 | Secret | REMOTE_SSH_KNOWN_HOSTS | Independently verified OpenSSH known_hosts entry (include port syntax for non-22) |
 
@@ -88,8 +170,9 @@ deployment after an authorized stable release is desired.
 
 ## Deployment and failure handling
 
-The runner verifies the published receipt/tag, uses pinned SSH host keys,
-uploads the versioned compose/deployment scripts, then asks the host to pull
+The runner verifies the published receipt/tag and uses pinned SSH host keys.
+Upload mode copies the versioned compose/deployment scripts; restricted mode
+invokes the administrator-installed entrypoint. It then asks the host to pull
 the exact `ghcr.io/richlogic/gian-remote@sha256:...` image. It uses a deployment
 lock, stops the previous service, backs up the stopped data volume, and starts
 the candidate. A short interruption is expected; existing clients reconnect.

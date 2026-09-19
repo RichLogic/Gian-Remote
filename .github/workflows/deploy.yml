@@ -15,6 +15,7 @@ on:
     types: [published]
 permissions:
   contents: read
+  packages: read
 concurrency:
   group: remote-deploy-production
   cancel-in-progress: false
@@ -56,6 +57,9 @@ jobs:
           REMOTE_SSH_USER: ${{ vars.REMOTE_SSH_USER }}
           REMOTE_SSH_PORT: ${{ vars.REMOTE_SSH_PORT || '22' }}
           REMOTE_DEPLOY_DIR: ${{ vars.REMOTE_DEPLOY_DIR }}
+          REMOTE_SSH_MODE: ${{ vars.REMOTE_SSH_MODE || 'upload' }}
+          REMOTE_REGISTRY_USER: ${{ github.actor }}
+          REMOTE_REGISTRY_TOKEN: ${{ github.token }}
           REMOTE_SSH_PRIVATE_KEY: ${{ secrets.REMOTE_SSH_PRIVATE_KEY }}
           REMOTE_SSH_KNOWN_HOSTS: ${{ secrets.REMOTE_SSH_KNOWN_HOSTS }}
         run: node scripts/deploy-ssh.mjs receipt/remote-release.json

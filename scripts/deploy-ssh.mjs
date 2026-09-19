@@ -21,9 +21,10 @@ export function deploySsh(receiptPath, env = process.env) {
   validateReleaseReceipt(receipt, { repository: env.GITHUB_REPOSITORY, tag: receipt.tag, revision: env.RELEASE_SHA });
   const temp = mkdtempSync(join(tmpdir(), 'gian-remote-ssh-'));
   const key = join(temp, 'identity'); const known = join(temp, 'known_hosts');
-  const run = (command, args) => {
+  const run = (command, args, input) => {
     const childEnv = { ...env }; delete childEnv.REMOTE_SSH_PRIVATE_KEY; delete childEnv.REMOTE_SSH_KNOWN_HOSTS;
-    const result = spawnSync(command, args, { stdio: 'inherit', env: childEnv, timeout: 10 * 60 * 1000 });
+    delete childEnv.REMOTE_REGISTRY_TOKEN;
+    const result = spawnSync(command, args, { stdio: [input === undefined ? 'inherit' : 'pipe', 'inherit', 'inherit'], input, env: childEnv, timeout: 10 * 60 * 1000 });
     if (result.error || result.status !== 0) throw result.error ?? new Error(`${command} failed (${result.status})`);
   };
   try {
@@ -31,6 +32,12 @@ export function deploySsh(receiptPath, env = process.env) {
     writeFileSync(known, env.REMOTE_SSH_KNOWN_HOSTS + '\n', { mode: 0o600, flag: 'wx' });
     const common = ['-i', key, '-o', `UserKnownHostsFile=${known}`, '-o', 'StrictHostKeyChecking=yes', '-o', 'BatchMode=yes', '-o', 'ConnectTimeout=15'];
     const destination = `${target.user}@${target.host}`;
+    if (env.REMOTE_SSH_MODE === 'restricted') {
+      if (!/^[A-Za-z0-9][A-Za-z0-9_-]*$/.test(env.REMOTE_REGISTRY_USER ?? '') || !env.REMOTE_REGISTRY_TOKEN || /[\r\n]/.test(env.REMOTE_REGISTRY_TOKEN) || env.REMOTE_REGISTRY_TOKEN.length > 8192) throw new Error('Restricted deployment requires short-lived registry authentication');
+      run('ssh', [...common, '-p', target.port, destination, `deploy ${receipt.sourceCommit} ${receipt.image} ${receipt.dataSchema}`], `${env.REMOTE_REGISTRY_USER}\n${env.REMOTE_REGISTRY_TOKEN}\n`);
+      return;
+    }
+    if (env.REMOTE_SSH_MODE && env.REMOTE_SSH_MODE !== 'upload') throw new Error('Unknown SSH deployment mode');
     const releaseDir = `${target.directory}/releases/${receipt.sourceCommit}`;
     run('ssh', [...common, '-p', target.port, destination, `umask 077; mkdir -p '${releaseDir}'`]);
     run('scp', [...common, '-P', target.port, 'compose.yaml', 'scripts/deploy.sh', `${destination}:${releaseDir}/`]);

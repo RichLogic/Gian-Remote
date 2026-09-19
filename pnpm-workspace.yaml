@@ -1,7 +1,6 @@
 packages:
   - 'packages/shared'
   - 'packages/chat-ui'
-  - 'packages/remote-protocol'
   - 'packages/remote-server'
   - 'packages/remote-web'
 

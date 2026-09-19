@@ -17,6 +17,7 @@ import {
   hostCreatePairingRequestSchema,
   hostEnrollmentClaimRequestSchema,
   hostHeartbeatRequestSchema,
+  hostUpdateProfileRequestSchema,
   hostRevokeDeviceRequestSchema,
   parseClosed,
   pairingClaimRequestSchema,
@@ -182,6 +183,7 @@ export async function createRemoteApp(config: RemoteServerConfig): Promise<Remot
   })));
 
   app.post('/api/v1/admin/host-enrollments', async (context) => {
+    context.header('Cache-Control', 'no-store');
     const admin = bearer(context.req.header('authorization'));
     if (!admin || !hashesEqual(hashSecret(admin), hashSecret(config.adminToken))) {
       return context.json(jsonError('AUTH_REQUIRED'), 401);
@@ -697,6 +699,14 @@ export async function createRemoteApp(config: RemoteServerConfig): Promise<Remot
     });
     if (!family) return context.json(jsonError('AUTH_REQUIRED'), 401);
     return context.json({ protocol: AUTH_PROTOCOL, hosts: hostsForFamily(family) });
+  });
+
+  app.post('/api/v1/host/profile', async (context) => {
+    const hostAuth = requireHost(context);
+    if (!hostAuth) return context.json(jsonError('AUTH_REQUIRED'), 401);
+    const body = parseClosed(hostUpdateProfileRequestSchema, await context.req.json());
+    repos.renameHost(hostAuth.hostId, body.name);
+    return context.json({ protocol: AUTH_PROTOCOL, host_id: hostAuth.hostId, name: body.name });
   });
 
   app.post('/api/v1/host/heartbeat', async (context) => {

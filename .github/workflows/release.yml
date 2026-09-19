@@ -132,6 +132,9 @@ jobs:
           gh release create "$RELEASE_TAG" remote-release.json SHA256SUMS --verify-tag --title "Gian Remote $RELEASE_TAG" --notes "Remote Server and Web. Deployment uses the immutable image digest in remote-release.json."
   deploy:
     needs: publish
+    permissions:
+      contents: read
+      packages: read
     uses: ./.github/workflows/deploy.yml
     with:
       tag: ${{ inputs.tag }}

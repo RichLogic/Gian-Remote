@@ -18,3 +18,4 @@ services:
     stop_grace_period: 30s
 volumes:
   remote-data:
+    name: ${REMOTE_DATA_VOLUME:-gian-remote_remote-data}

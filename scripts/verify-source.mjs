@@ -3,9 +3,17 @@ import { existsSync, lstatSync, readFileSync, realpathSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
+import { protocolPackageName, validateProtocolDependency } from './protocol-dependency.mjs';
 
 export function verifySource(root = process.cwd()) {
   const manifest = JSON.parse(readFileSync(join(root, '.gian-source.json')));
+  if (existsSync(join(root, 'packages/remote-protocol'))) throw new Error('Remote must consume the Gian protocol package, not a protocol source directory');
+  const protocol = validateProtocolDependency(JSON.parse(readFileSync(join(root, 'protocol-package.json'))));
+  if (JSON.stringify(manifest.externalPackages) !== JSON.stringify([protocol])) throw new Error('Protocol dependency differs from exported provenance');
+  for (const name of ['remote-server', 'remote-web']) {
+    const metadata = JSON.parse(readFileSync(join(root, `packages/${name}/package.json`)));
+    if (metadata.dependencies?.[protocolPackageName] !== protocol.url) throw new Error('Remote protocol dependency must point to its exact public Gian archive');
+  }
   if (manifest.schema !== 1 || !/^[a-f0-9]{40}$/.test(manifest.sourceCommit ?? '') || !Array.isArray(manifest.files) || !manifest.files.length) throw new Error('Invalid source provenance');
   const paths = new Set(['.gian-source.json']);
   for (const file of manifest.files) {

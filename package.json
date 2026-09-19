@@ -9,9 +9,9 @@
   },
   "scripts": {
     "preinstall": "node scripts/check-node.js",
-    "build": "pnpm --filter @gian/shared build && pnpm --filter @gian/remote-protocol build && pnpm --filter @gian/chat-ui build && pnpm --filter @gian/remote-server build && pnpm --filter @gian/remote-web build",
+    "build": "pnpm --filter @gian/shared build && pnpm --filter @gian/chat-ui build && pnpm --filter @gian/remote-server build && pnpm --filter @gian/remote-web build",
     "typecheck": "pnpm build && pnpm -r --if-present typecheck",
-    "test": "node --test test/*.test.mjs && pnpm build && pnpm --filter @gian/remote-protocol test && pnpm --filter @gian/remote-server test && pnpm --filter @gian/chat-ui test && pnpm --filter @gian/remote-web test",
+    "test": "node --test test/*.test.mjs && pnpm build && pnpm --filter @gian/remote-server test && pnpm --filter @gian/chat-ui test && pnpm --filter @gian/remote-web test",
     "start": "node packages/remote-server/dist/src/cli.js"
   },
   "devDependencies": {

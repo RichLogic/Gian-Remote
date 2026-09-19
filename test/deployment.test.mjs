@@ -57,3 +57,30 @@ test('failed migration-changing deployment stops instead of running old code on 
   assert.equal(f.calls().filter(a => a.includes('up')).length, 1);
   assert.equal(readlinkSync(join(f.base, 'current')), `releases/${oldRevision}`);
 });
+
+test('adopted deployment keeps the existing Compose project and named data volume', t => {
+  const f = fixture(t);
+  f.env.REMOTE_COMPOSE_PROJECT = 'current';
+  f.env.REMOTE_DATA_VOLUME = 'current_remote-data';
+  const result = f.run(false);
+  assert.equal(result.status, 0, result.stderr);
+  for (const call of f.calls().filter(a => a[0] === 'compose')) assert.equal(call[call.indexOf('--project-name') + 1], 'current');
+  assert.ok(f.calls().find(a => a[0] === 'run').includes('current_remote-data:/data:ro'));
+  assert.match(readFileSync(join(f.base, 'releases', newRevision, 'deploy.env'), 'utf8'), /REMOTE_DATA_VOLUME=current_remote-data/);
+});
+
+test('restricted SSH entrypoint rejects arbitrary shells and only invokes its fixed deployment tooling', t => {
+  const f = fixture(t);
+  const entrypoint = resolve(existsSync('delivery/remote/scripts/ssh-entrypoint.sh') ? 'delivery/remote/scripts/ssh-entrypoint.sh' : 'scripts/ssh-entrypoint.sh');
+  const tooling = join(f.base, 'tooling'); mkdirSync(tooling);
+  writeFileSync(join(tooling, 'compose.yaml'), 'services: {}\n');
+  writeFileSync(join(tooling, 'deploy.sh'), 'printf "%s %s" "$REMOTE_COMPOSE_PROJECT" "$REMOTE_DATA_VOLUME" > "$1/accepted"\n');
+  const run = command => spawnSync('bash', [entrypoint, f.base, 'current', 'current_remote-data'], { env: { ...f.env, SSH_ORIGINAL_COMMAND: command }, input: 'ci_user\nfixture_token\n', encoding: 'utf8' });
+  for (const command of ['uname -a', 'scp -t /root/.ssh', `deploy ${newRevision} ghcr.io/other/image@sha256:${schema} ${schema}`, `deploy ${newRevision} ghcr.io/richlogic/gian-remote@sha256:${schema} ${schema}; id`]) {
+    assert.notEqual(run(command).status, 0);
+    assert.equal(existsSync(join(f.base, 'accepted')), false);
+  }
+  const result = run(`deploy ${newRevision} ghcr.io/richlogic/gian-remote@sha256:${schema} ${schema}`);
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(readFileSync(join(f.base, 'accepted'), 'utf8'), 'current current_remote-data');
+});

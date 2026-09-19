@@ -171,6 +171,9 @@ deployment after an authorized stable release is desired.
 ## Deployment and failure handling
 
 The runner verifies the published receipt/tag and uses pinned SSH host keys.
+SSH sends a keepalive every 15 seconds and allows up to 60 minutes per transfer
+or deployment for slow registry links (65-minute job budget). Transport tooling
+comes from main so connection fixes can retry existing immutable releases.
 Upload mode copies the versioned compose/deployment scripts; restricted mode
 invokes the administrator-installed entrypoint. It then asks the host to pull
 the exact `ghcr.io/richlogic/gian-remote@sha256:...` image. It uses a deployment

@@ -2,7 +2,7 @@
   "schema": 1,
   "product": "Gian Remote",
   "sourceRepository": "RichLogic/Gian-Dev",
-  "sourceCommit": "0868d31d0aa37970db7b5cea4a19f511e22a7e4c",
+  "sourceCommit": "8429e6cae43a13188f3d718e3e562080623ac348",
   "workingTree": false,
   "sharedPackages": [
     "shared",
@@ -50,7 +50,7 @@
     {
       "source": "delivery/remote/.github/workflows/deploy.yml",
       "path": ".github/workflows/deploy.yml",
-      "sha256": "38a2a0122f872571ffc9667ccf068f2a1d567f79ad053adcadea3a8ae742f40b"
+      "sha256": "74678499a550fc4a5ad82ce2619371ba1cbe2b35151bd016d8743d2dfd1253b5"
     },
     {
       "source": "delivery/remote/.github/workflows/release.yml",
@@ -70,7 +70,7 @@
     {
       "source": "delivery/remote/README.md",
       "path": "README.md",
-      "sha256": "3b9f364aefe3d4fa9a7434ff04ba10714e20d8c67a0e9709ed577a8b70b7b6d4"
+      "sha256": "b596d1827aac4c1fb24ca41d76e0ea35a0f6d6de2f816eb85fae5e4a4186dec1"
     },
     {
       "source": "delivery/remote/compose.yaml",
@@ -100,7 +100,7 @@
     {
       "source": "delivery/remote/scripts/deploy-ssh.mjs",
       "path": "scripts/deploy-ssh.mjs",
-      "sha256": "b987ff66102c84e726648365d949d5af1f1a795e063c35c9f3a6d2e0e4eaab74"
+      "sha256": "ddbbedb2e61ad806a7eaeaebe09e982eb567f6dbcd3c899fd2341b42509e2a95"
     },
     {
       "source": "delivery/remote/scripts/deploy.sh",
@@ -155,7 +155,7 @@
     {
       "source": "delivery/remote/test/release.test.mjs",
       "path": "test/release.test.mjs",
-      "sha256": "b145f723942ecfaefab078080f74ef6cfb517fdf5c1d9b65e4a11916a64c457b"
+      "sha256": "40e6fe4b0a65da3f6ebc6740e23f1c2a14e9653166d4dad592d7d4a22ba3feb2"
     },
     {
       "source": "delivery/remote/test/runtime-bundle.test.mjs",
@@ -1132,7 +1132,7 @@
     {
       "path": ".github/workflows/deploy.yml",
       "mode": 420,
-      "sha256": "38a2a0122f872571ffc9667ccf068f2a1d567f79ad053adcadea3a8ae742f40b"
+      "sha256": "74678499a550fc4a5ad82ce2619371ba1cbe2b35151bd016d8743d2dfd1253b5"
     },
     {
       "path": ".github/workflows/release.yml",
@@ -2117,7 +2117,7 @@
     {
       "path": "README.md",
       "mode": 420,
-      "sha256": "3b9f364aefe3d4fa9a7434ff04ba10714e20d8c67a0e9709ed577a8b70b7b6d4"
+      "sha256": "b596d1827aac4c1fb24ca41d76e0ea35a0f6d6de2f816eb85fae5e4a4186dec1"
     },
     {
       "path": "release.json",
@@ -2142,7 +2142,7 @@
     {
       "path": "scripts/deploy-ssh.mjs",
       "mode": 420,
-      "sha256": "b987ff66102c84e726648365d949d5af1f1a795e063c35c9f3a6d2e0e4eaab74"
+      "sha256": "ddbbedb2e61ad806a7eaeaebe09e982eb567f6dbcd3c899fd2341b42509e2a95"
     },
     {
       "path": "scripts/deploy.sh",
@@ -2202,7 +2202,7 @@
     {
       "path": "test/release.test.mjs",
       "mode": 420,
-      "sha256": "b145f723942ecfaefab078080f74ef6cfb517fdf5c1d9b65e4a11916a64c457b"
+      "sha256": "40e6fe4b0a65da3f6ebc6740e23f1c2a14e9653166d4dad592d7d4a22ba3feb2"
     },
     {
       "path": "test/runtime-bundle.test.mjs",

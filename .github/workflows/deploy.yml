@@ -24,7 +24,7 @@ jobs:
     if: github.repository == 'RichLogic/Gian-Remote' && vars.REMOTE_DEPLOY_ENABLED == 'true' && (github.event_name != 'release' || github.event.release.prerelease == false) && (github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main')
     runs-on: ubuntu-24.04
     environment: remote-production
-    timeout-minutes: 15
+    timeout-minutes: 65
     steps:
       - uses: actions/checkout@v6
         with:
@@ -50,7 +50,9 @@ jobs:
           export RELEASE_SHA
           node scripts/release-metadata.mjs verify receipt/remote-release.json
           echo "RELEASE_SHA=$RELEASE_SHA" >> "$GITHUB_ENV"
-          git checkout --detach "$RELEASE_SHA"
+          # Transport fixes on main can retry immutable releases without rebuilding.
+          # Upload mode still sends only the release's Compose and host script.
+          git restore --source "$RELEASE_SHA" -- compose.yaml scripts/deploy.sh
       - name: Deploy verified image over pinned SSH connection
         env:
           REMOTE_SSH_HOST: ${{ vars.REMOTE_SSH_HOST }}

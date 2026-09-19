@@ -1,0 +1,20 @@
+{
+  "files": [],
+  "references": [
+    {
+      "path": "./packages/shared"
+    },
+    {
+      "path": "./packages/chat-ui"
+    },
+    {
+      "path": "./packages/remote-protocol"
+    },
+    {
+      "path": "./packages/remote-server"
+    },
+    {
+      "path": "./packages/remote-web"
+    }
+  ]
+}

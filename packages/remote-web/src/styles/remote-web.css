@@ -83,8 +83,27 @@ input, select, textarea {
   border-radius: var(--r-1);
   font: 550 11.5px/1 var(--font-sans);
   color: var(--text-2);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 .segm-item.active { background: var(--surface); color: var(--text); box-shadow: var(--shadow-1); }
+
+/* Proxy branding logo (new-chat picker, session rows). Monogram fallback
+   keeps the tile size stable while bytes are in flight. */
+.proxy-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-1);
+  object-fit: contain;
+  flex: none;
+}
+.proxy-logo-mono {
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font: 600 10px/1 var(--font-sans);
+}
 
 .spinner {
   display: inline-block;
@@ -455,6 +474,9 @@ input, select, textarea {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  /* Wide markdown (tables, code) scrolls inside its own container; the page
+   *  itself never gains a horizontal scrollbar on narrow viewports. */
+  overflow-x: hidden;
   padding: 14px 18px;
 }
 

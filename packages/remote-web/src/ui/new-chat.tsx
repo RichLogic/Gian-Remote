@@ -9,6 +9,7 @@ import { mutationsEnabled } from '../controller/types.js';
 import { useT } from '../i18n/index.js';
 import { useRemoteActions, useRemoteState } from './controller-context.js';
 import { Icon } from './icons.js';
+import { ProxyLogo } from './proxy-logo.js';
 
 export function NewChatPage() {
   const t = useT();
@@ -110,6 +111,7 @@ export function NewChatPage() {
                   setModel('');
                 }}
               >
+                <ProxyLogo proxy={agent.proxy} name={agent.name} size={14} />
                 {agent.name}
               </button>
             ))}

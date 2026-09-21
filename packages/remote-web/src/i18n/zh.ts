@@ -161,6 +161,7 @@ export const ZH: Messages = {
   'settings.title': 'Settings',
   'settings.back': '返回对话',
   'settings.appearance': '外观',
+  'settings.theme.system': '跟随系统',
   'settings.hosts': 'Host 连接',
   'settings.host.current': '当前',
   'settings.host.disconnect': '断开此 Host',

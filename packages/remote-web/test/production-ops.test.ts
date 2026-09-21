@@ -54,6 +54,7 @@ function emptyState(): RemoteUiState {
     catalogRevision: 'rev-0',
     catalog: null,
     catalogInvalidated: false,
+    logos: {},
     snapshotReceivedAt: null,
     view: { kind: 'empty' },
     mobilePage: 'chat',

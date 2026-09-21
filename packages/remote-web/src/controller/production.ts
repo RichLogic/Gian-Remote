@@ -15,6 +15,7 @@ import {
   generateCanonicalId,
   generateUuidV7,
   parseClosed,
+  proxyLogoResultSchema,
   stateSnapshotPartSchema,
   stateSnapshotPendingSchema,
   transcriptPageSchema,
@@ -194,6 +195,12 @@ export function createProductionController(options: ProductionControllerOptions)
   }>();
   const uploadAcks = new Map<string, TransferAckGate>();
   const downloads = new Map<string, DownloadTransfer>();
+  /** In-flight `proxy.logo` reads, keyed `${proxy}:${variant}`. */
+  const logoInflight = new Set<string>();
+  /** Hosts whose protocol predates `proxy.logo` (INVALID_FRAME on first try). */
+  const logoUnsupportedHosts = new Set<string>();
+  /** Proxy/variant pairs a Host reported missing; no retry against that Host. */
+  const logoMisses = new Set<string>();
 
   let state: RemoteUiState = emptyUiState();
   const hostSelection = options.hostSelection ?? createHostSelectionStore();
@@ -284,6 +291,7 @@ export function createProductionController(options: ProductionControllerOptions)
       mobilePage: 'chat', fileViewer: null, view: { kind: 'empty' },
       tasks: [], sessions: [], workspaces: [], interactions: [], capabilities: {},
       catalog: null, catalogInvalidated: true, transcripts: {}, drafts,
+      logos: {},
       queueNotice: null, unknownCommandId, interactionErrors: {}, interactionPhases: {},
       fileDownload: { status: 'idle' } });
   }
@@ -339,6 +347,9 @@ export function createProductionController(options: ProductionControllerOptions)
     update({ ...next, connectionPhase: undefined, connectionFailed: false });
     void cache.put(snapshot.host.id, snapshot);
     if (next.view.kind === 'chat') hydrateSessionDetached(next.view.sessionId, 'initial', true);
+    // The first snapshot may land after the catalog; retry the lazy logo
+    // fetch once both are present.
+    if (state.catalog) ensureProxyLogos(state.catalog);
   }
 
   function noteSequence(hostId: string, type: string, sequence: number, eventKind?: string): boolean {
@@ -477,7 +488,8 @@ export function createProductionController(options: ProductionControllerOptions)
       || method === 'catalog.read'
       || method === 'session.subscribe'
       || method === 'session.page'
-      || method === 'command.status';
+      || method === 'command.status'
+      || method === 'proxy.logo';
     const transport = boundRelay();
     if (!transport) {
       if (!readable) throw new RemoteProtocolError('HOST_OFFLINE', 'Host relay is not connected');
@@ -559,6 +571,39 @@ export function createProductionController(options: ProductionControllerOptions)
 
   function requestCatalog(): void {
     void sendReadCommand('catalog.read', {}, 'catalog.read').catch(() => undefined);
+  }
+
+  /** Lazily fetch branding logos for every proxy in the catalog, both theme
+   *  variants. Hosts predating the method answer INVALID_FRAME once and are
+   *  never asked again — the monogram fallback stays. */
+  function ensureProxyLogos(catalog: RemoteCatalog): void {
+    const hostId = state.currentHostId;
+    if (!hostId || logoUnsupportedHosts.has(hostId)) return;
+    const proxies = [...new Set(catalog.agents.map(agent => agent.proxy))]
+      .filter(proxy => proxy !== 'unknown');
+    for (const proxy of proxies) {
+      for (const variant of ['light', 'dark'] as const) {
+        const key = `${proxy}:${variant}`;
+        if (state.logos[proxy]?.[variant] || logoInflight.has(key) || logoMisses.has(`${hostId}:${key}`)) continue;
+        logoInflight.add(key);
+        void sendCommand('proxy.logo', { proxy, variant }, 'proxy.logo')
+          .then((data) => {
+            if (data === undefined) return;
+            const logo = parseClosed(proxyLogoResultSchema, data);
+            const url = `data:${logo.media_type};base64,${logo.data_base64}`;
+            update({ logos: { ...state.logos, [proxy]: { ...state.logos[proxy], [variant]: url } } });
+          })
+          .catch((error) => {
+            const code = errorCode(error);
+            if (code === 'INVALID_FRAME' || code === 'REMOTE_CAPABILITY_DENIED') {
+              logoUnsupportedHosts.add(hostId);
+            } else {
+              logoMisses.add(`${hostId}:${key}`);
+            }
+          })
+          .finally(() => logoInflight.delete(key));
+      }
+    }
   }
 
   function requestState(): void {
@@ -949,6 +994,7 @@ export function createProductionController(options: ProductionControllerOptions)
         catalogInvalidated: false,
         workspaces: catalog.workspaces,
       });
+      ensureProxyLogos(catalog);
       return;
     }
     if (method === 'session.create' || method === 'session.update' || method === 'session.send') {
@@ -1987,6 +2033,7 @@ function emptyUiState(): RemoteUiState {
     catalogRevision: '',
     catalog: null,
     catalogInvalidated: false,
+    logos: {},
     snapshotReceivedAt: null,
     view: { kind: 'empty' },
     mobilePage: 'chat',
@@ -1997,7 +2044,7 @@ function emptyUiState(): RemoteUiState {
     fileDownload: { status: 'idle' },
     mutations: {},
     unknownCommandId: null,
-    settings: { theme: 'light', accent: 'azure' },
+    settings: { theme: 'system', accent: 'azure' },
   };
 }
 

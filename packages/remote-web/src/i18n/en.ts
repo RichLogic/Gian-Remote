@@ -186,6 +186,7 @@ export const EN: Messages = {
   'settings.title': 'Settings',
   'settings.back': 'Back to chat',
   'settings.appearance': 'Appearance',
+  'settings.theme.system': 'system',
   'settings.hosts': 'Host connections',
   'settings.host.current': 'current',
   'settings.host.disconnect': 'Disconnect this Host',

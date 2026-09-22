@@ -2,7 +2,7 @@
   "schema": 1,
   "product": "Gian Remote",
   "sourceRepository": "RichLogic/Gian-Dev",
-  "sourceCommit": "130562183afc7937953ea525802ce3e568d56dc4",
+  "sourceCommit": "8f6d01cf432c2be039d061c9a78390a815d17e59",
   "workingTree": false,
   "sharedPackages": [
     "shared",
@@ -85,7 +85,7 @@
     {
       "source": "delivery/remote/release.json",
       "path": "release.json",
-      "sha256": "f1126963e0239c54ba8f0f6faebec9d26bb0fff98f8bbbbf6743166b276bbf64"
+      "sha256": "66559749e925a277b1183f285e27cbe1c9e52451fc0285f087cf742df6c91260"
     },
     {
       "source": "delivery/remote/runtime.env.example",
@@ -175,7 +175,7 @@
     {
       "source": "packages/chat-ui/src/context-cards.tsx",
       "path": "packages/chat-ui/src/context-cards.tsx",
-      "sha256": "7b47a6ce3a206e156416d9298f2824d3e9b6019442fdf2587855251dca43155b"
+      "sha256": "04e271533d03794a773570679b4e60c627cf3b44e958f2ec392be59d4c9c0e0e"
     },
     {
       "source": "packages/chat-ui/src/contexts.ts",
@@ -200,7 +200,7 @@
     {
       "source": "packages/chat-ui/src/i18n.tsx",
       "path": "packages/chat-ui/src/i18n.tsx",
-      "sha256": "7fee9d02c3bd015956f6202661e01f509dba0c6301e211a3e3d11cedd52296ce"
+      "sha256": "46c5fc00215e2a4a7b07313e39aef2bbfe2d7ce18ecf22d4d344bc2437d729d8"
     },
     {
       "source": "packages/chat-ui/src/identity.ts",
@@ -210,27 +210,32 @@
     {
       "source": "packages/chat-ui/src/index.ts",
       "path": "packages/chat-ui/src/index.ts",
-      "sha256": "da1eeea213248eb3b071234beafbe691c9fcd2ce17b222b88ca866d5790092a4"
+      "sha256": "b37f47ab7fcd50f4fb237257bd0541e09e42cdce146f735b4c41ce329bada707"
     },
     {
       "source": "packages/chat-ui/src/inline-reference-document.tsx",
       "path": "packages/chat-ui/src/inline-reference-document.tsx",
-      "sha256": "6d12f210651b24d23ec9eceeda142fec6790b2fdbfdf3b36487b1a5332296033"
+      "sha256": "b980e06cea81afa40b9fcb54cd9391d4b6abea7508bdb72b7dc41d3801d3273e"
     },
     {
       "source": "packages/chat-ui/src/items.tsx",
       "path": "packages/chat-ui/src/items.tsx",
-      "sha256": "c9db43bbd224df1c724d049690831c207013ba37bcbbc44a1815c56b94ea229d"
+      "sha256": "9b668c458d3d79a51e4750c3ae3fb47e68ae25e4b1fd45e695b959a07c8c467a"
     },
     {
       "source": "packages/chat-ui/src/links/LinkAnchor.tsx",
       "path": "packages/chat-ui/src/links/LinkAnchor.tsx",
-      "sha256": "7469262a05130c5c58694161fe98ec5c65b43be830c669429c726c242b239f15"
+      "sha256": "ec50381da7e1914e853425aa6d98d6992981461f3f1ef36e115753a98ef32aad"
     },
     {
       "source": "packages/chat-ui/src/links/LinkBehaviorContext.tsx",
       "path": "packages/chat-ui/src/links/LinkBehaviorContext.tsx",
       "sha256": "433f948cbfbd48da3a3011b74df80c457b03a3cd74e6fc7fe40a70fecc682e39"
+    },
+    {
+      "source": "packages/chat-ui/src/links/LinkPreviewCard.tsx",
+      "path": "packages/chat-ui/src/links/LinkPreviewCard.tsx",
+      "sha256": "207198ecd92cb9bc6bde2800f9fc1c94f81746f137b28e11a1f7ba5990f78a01"
     },
     {
       "source": "packages/chat-ui/src/links/classify.ts",
@@ -258,6 +263,11 @@
       "sha256": "d6ba1549fc6e5bcd2c801eed87a66db1d0e0d55885c32f1ffdc2208495ad33db"
     },
     {
+      "source": "packages/chat-ui/src/links/preview-context.ts",
+      "path": "packages/chat-ui/src/links/preview-context.ts",
+      "sha256": "64cf932cd062f441bcc079c4d4c14e513fd12312b7d992cf9e22763266972554"
+    },
+    {
       "source": "packages/chat-ui/src/markdown-mermaid.tsx",
       "path": "packages/chat-ui/src/markdown-mermaid.tsx",
       "sha256": "b3d6a9fb606d86f666a2e861748403094a66051a2330bb9e40f35be5e2bd9444"
@@ -275,7 +285,7 @@
     {
       "source": "packages/chat-ui/src/reference-popover.tsx",
       "path": "packages/chat-ui/src/reference-popover.tsx",
-      "sha256": "3e38b085eb77b4ad4deb1302d09f146d75de07fd5856b0c58e3761cb4bb7bbe0"
+      "sha256": "b9dfd41c7a669cb0ebdf88b21993d450aaed6af2df768f734b19341b89bae64f"
     },
     {
       "source": "packages/chat-ui/src/transcript.tsx",
@@ -295,12 +305,12 @@
     {
       "source": "packages/chat-ui/styles/chat-ui.css",
       "path": "packages/chat-ui/styles/chat-ui.css",
-      "sha256": "fe4b5b3e215ac33aafd082d5aaa3b64854874a6d9967806a5f58b07f7a5a1ad9"
+      "sha256": "bd14d1a5b3c4b17fae7c4a6578cffb2ab37890d9abce82e6679c2b409cba50de"
     },
     {
       "source": "packages/chat-ui/test/context-attachment.test.tsx",
       "path": "packages/chat-ui/test/context-attachment.test.tsx",
-      "sha256": "36bb324e568608a10938c9c603658b71786923d5a9fa9318994627a5b45ff9a7"
+      "sha256": "bdfe595cc847fc8e3315c25653952c5327d57f2e16afddaf45460f05a23023c5"
     },
     {
       "source": "packages/chat-ui/test/i18n.test.tsx",
@@ -316,6 +326,11 @@
       "source": "packages/chat-ui/test/link-anchor.test.tsx",
       "path": "packages/chat-ui/test/link-anchor.test.tsx",
       "sha256": "9eef3e9891f8b475123b208109ebfd051d0c81f48d892bcfbb3b52d0893f4ed2"
+    },
+    {
+      "source": "packages/chat-ui/test/link-preview-card.test.tsx",
+      "path": "packages/chat-ui/test/link-preview-card.test.tsx",
+      "sha256": "c3f5b938626c0f55aa77aa2cdfcba1b95a1e7dd9d86e4d390446eb2b24c53cfe"
     },
     {
       "source": "packages/chat-ui/test/linkify-text.test.tsx",
@@ -340,7 +355,7 @@
     {
       "source": "packages/chat-ui/test/messages.test.tsx",
       "path": "packages/chat-ui/test/messages.test.tsx",
-      "sha256": "75456ad1c30d7257c60510605a1530ff3bf1b5919a046682d301b33002279c23"
+      "sha256": "26229d70e4c9f573a086face4c7a421d776bfb00a14730d80a57835482597785"
     },
     {
       "source": "packages/chat-ui/test/projection.test.ts",
@@ -665,7 +680,7 @@
     {
       "source": "packages/remote-web/src/i18n/chat-ui-zh.ts",
       "path": "packages/remote-web/src/i18n/chat-ui-zh.ts",
-      "sha256": "66473d3e5eb96dd29412bfed170bffff502cd3e6b69c22aea2201f92e8022144"
+      "sha256": "2725e7058c8b17fa0be2e35a179a6ed6e192e9464ea09a51632fbddd91f59838"
     },
     {
       "source": "packages/remote-web/src/i18n/en.ts",
@@ -710,7 +725,7 @@
     {
       "source": "packages/remote-web/src/styles/remote-web.css",
       "path": "packages/remote-web/src/styles/remote-web.css",
-      "sha256": "52246a2bed0c25367523787b9caa9fb8f9d1af408aba1af07e1508a0951ca52b"
+      "sha256": "e8e2d6885d90702b535a91d5500bbcf09af03a6eb018978c5667325c9a4f565b"
     },
     {
       "source": "packages/remote-web/src/styles/tokens.css",
@@ -775,7 +790,7 @@
     {
       "source": "packages/remote-web/src/ui/composer.tsx",
       "path": "packages/remote-web/src/ui/composer.tsx",
-      "sha256": "fbf014557ac6abe92b4702f995238fa2437dfa03d45f27120110301aa1873f76"
+      "sha256": "a6dc96870007de3fd31c46187e2adbf27111c7f41fbf88ec23e4184daa2649f2"
     },
     {
       "source": "packages/remote-web/src/ui/controller-context.tsx",
@@ -860,7 +875,7 @@
     {
       "source": "packages/remote-web/test/chat-composer.test.tsx",
       "path": "packages/remote-web/test/chat-composer.test.tsx",
-      "sha256": "9b10a2e1c1f7f01f82603cfdd3a7e956f32f2f579015f81fe6b18f2c532a6e50"
+      "sha256": "f97be2545a623bcfcbcafd823b27f914d178fd7afcfefabab335e2228d6095ad"
     },
     {
       "source": "packages/remote-web/test/ciphertext-pacer.test.ts",
@@ -1025,7 +1040,7 @@
     {
       "source": "packages/shared/src/agents.ts",
       "path": "packages/shared/src/agents.ts",
-      "sha256": "a63f943ce305174ff3dc989685da3a57b3f3d8b691ab2b18d509232219bf9ee7"
+      "sha256": "6c096eaa3c61119a73502f9686f20c2ca644924b8e1e259850c50b36ab73c8e7"
     },
     {
       "source": "packages/shared/src/bounded-path.ts",
@@ -1040,12 +1055,12 @@
     {
       "source": "packages/shared/src/browser.ts",
       "path": "packages/shared/src/browser.ts",
-      "sha256": "dbe05b0499c908477353fc987a8bb046bd28c616316d29cf19fc1881aeada64c"
+      "sha256": "1c60c9454e304761a7eadf30809728ad2bc3dc8478ff52b5468eeb2a84d5eff5"
     },
     {
       "source": "packages/shared/src/context.ts",
       "path": "packages/shared/src/context.ts",
-      "sha256": "3b3be92c890f6fc8b53456f98113c3b0f39abfb52b2c2306a9c7bff95c2050b9"
+      "sha256": "e0bc077b59b68855c80c336d82b231ab4db035028fa6e6da3ab16b03d6f3be85"
     },
     {
       "source": "packages/shared/src/events.ts",
@@ -1115,7 +1130,7 @@
     {
       "source": "packages/shared/src/proxy.ts",
       "path": "packages/shared/src/proxy.ts",
-      "sha256": "40fc97a1d63d00f0db8a82a0fde2e9d11528ab2620d328b4af28d7abba4ef169"
+      "sha256": "096b73d034a6c557a9aa8a976f5ac7d56c43d475dd02c26541685fc77df7bff1"
     },
     {
       "source": "packages/shared/src/remote-settings.ts",
@@ -1130,7 +1145,7 @@
     {
       "source": "packages/shared/src/runtime-contracts.ts",
       "path": "packages/shared/src/runtime-contracts.ts",
-      "sha256": "6a549f408f34886efcfcc4b12a80decb04ec306fb43b7ca02e5c7c53830e31a2"
+      "sha256": "609f096b9dc8a451067e7d3af4e65378a809d539dad869ebb40f9582237973a4"
     },
     {
       "source": "packages/shared/src/schedule.ts",
@@ -1155,7 +1170,7 @@
     {
       "source": "packages/shared/src/tool.ts",
       "path": "packages/shared/src/tool.ts",
-      "sha256": "1c20b45656973d41971060c35db7b5a1b207acbc010fb4dc13f82c407769e7cb"
+      "sha256": "b97fe388a28305a10452ac9198b3055f550352849f878fa571c61456342d7f07"
     },
     {
       "source": "packages/shared/src/trace.ts",
@@ -1257,7 +1272,7 @@
     {
       "path": "package.json",
       "mode": 420,
-      "sha256": "d58a65d466eba8591ff3984da6383b5432aed993fea22e83c0a6c5872d6ddc21"
+      "sha256": "ae89caefedb3772ab5204d661d24b9816a33aaa606af8818baabb0ae4e45b495"
     },
     {
       "path": "packages/chat-ui/package.json",
@@ -1272,7 +1287,7 @@
     {
       "path": "packages/chat-ui/src/context-cards.tsx",
       "mode": 420,
-      "sha256": "7b47a6ce3a206e156416d9298f2824d3e9b6019442fdf2587855251dca43155b"
+      "sha256": "04e271533d03794a773570679b4e60c627cf3b44e958f2ec392be59d4c9c0e0e"
     },
     {
       "path": "packages/chat-ui/src/contexts.ts",
@@ -1297,7 +1312,7 @@
     {
       "path": "packages/chat-ui/src/i18n.tsx",
       "mode": 420,
-      "sha256": "7fee9d02c3bd015956f6202661e01f509dba0c6301e211a3e3d11cedd52296ce"
+      "sha256": "46c5fc00215e2a4a7b07313e39aef2bbfe2d7ce18ecf22d4d344bc2437d729d8"
     },
     {
       "path": "packages/chat-ui/src/identity.ts",
@@ -1307,17 +1322,17 @@
     {
       "path": "packages/chat-ui/src/index.ts",
       "mode": 420,
-      "sha256": "da1eeea213248eb3b071234beafbe691c9fcd2ce17b222b88ca866d5790092a4"
+      "sha256": "b37f47ab7fcd50f4fb237257bd0541e09e42cdce146f735b4c41ce329bada707"
     },
     {
       "path": "packages/chat-ui/src/inline-reference-document.tsx",
       "mode": 420,
-      "sha256": "6d12f210651b24d23ec9eceeda142fec6790b2fdbfdf3b36487b1a5332296033"
+      "sha256": "b980e06cea81afa40b9fcb54cd9391d4b6abea7508bdb72b7dc41d3801d3273e"
     },
     {
       "path": "packages/chat-ui/src/items.tsx",
       "mode": 420,
-      "sha256": "c9db43bbd224df1c724d049690831c207013ba37bcbbc44a1815c56b94ea229d"
+      "sha256": "9b668c458d3d79a51e4750c3ae3fb47e68ae25e4b1fd45e695b959a07c8c467a"
     },
     {
       "path": "packages/chat-ui/src/links/classify.ts",
@@ -1337,7 +1352,7 @@
     {
       "path": "packages/chat-ui/src/links/LinkAnchor.tsx",
       "mode": 420,
-      "sha256": "7469262a05130c5c58694161fe98ec5c65b43be830c669429c726c242b239f15"
+      "sha256": "ec50381da7e1914e853425aa6d98d6992981461f3f1ef36e115753a98ef32aad"
     },
     {
       "path": "packages/chat-ui/src/links/LinkBehaviorContext.tsx",
@@ -1350,9 +1365,19 @@
       "sha256": "7863d012ab93071cea03014498a30104bb473f182ba60183f7b51bce60040d97"
     },
     {
+      "path": "packages/chat-ui/src/links/LinkPreviewCard.tsx",
+      "mode": 420,
+      "sha256": "207198ecd92cb9bc6bde2800f9fc1c94f81746f137b28e11a1f7ba5990f78a01"
+    },
+    {
       "path": "packages/chat-ui/src/links/policy.ts",
       "mode": 420,
       "sha256": "d6ba1549fc6e5bcd2c801eed87a66db1d0e0d55885c32f1ffdc2208495ad33db"
+    },
+    {
+      "path": "packages/chat-ui/src/links/preview-context.ts",
+      "mode": 420,
+      "sha256": "64cf932cd062f441bcc079c4d4c14e513fd12312b7d992cf9e22763266972554"
     },
     {
       "path": "packages/chat-ui/src/markdown-mermaid.tsx",
@@ -1372,7 +1397,7 @@
     {
       "path": "packages/chat-ui/src/reference-popover.tsx",
       "mode": 420,
-      "sha256": "3e38b085eb77b4ad4deb1302d09f146d75de07fd5856b0c58e3761cb4bb7bbe0"
+      "sha256": "b9dfd41c7a669cb0ebdf88b21993d450aaed6af2df768f734b19341b89bae64f"
     },
     {
       "path": "packages/chat-ui/src/transcript.tsx",
@@ -1392,12 +1417,12 @@
     {
       "path": "packages/chat-ui/styles/chat-ui.css",
       "mode": 420,
-      "sha256": "fe4b5b3e215ac33aafd082d5aaa3b64854874a6d9967806a5f58b07f7a5a1ad9"
+      "sha256": "bd14d1a5b3c4b17fae7c4a6578cffb2ab37890d9abce82e6679c2b409cba50de"
     },
     {
       "path": "packages/chat-ui/test/context-attachment.test.tsx",
       "mode": 420,
-      "sha256": "36bb324e568608a10938c9c603658b71786923d5a9fa9318994627a5b45ff9a7"
+      "sha256": "bdfe595cc847fc8e3315c25653952c5327d57f2e16afddaf45460f05a23023c5"
     },
     {
       "path": "packages/chat-ui/test/i18n.test.tsx",
@@ -1413,6 +1438,11 @@
       "path": "packages/chat-ui/test/link-anchor.test.tsx",
       "mode": 420,
       "sha256": "9eef3e9891f8b475123b208109ebfd051d0c81f48d892bcfbb3b52d0893f4ed2"
+    },
+    {
+      "path": "packages/chat-ui/test/link-preview-card.test.tsx",
+      "mode": 420,
+      "sha256": "c3f5b938626c0f55aa77aa2cdfcba1b95a1e7dd9d86e4d390446eb2b24c53cfe"
     },
     {
       "path": "packages/chat-ui/test/linkify-text.test.tsx",
@@ -1437,7 +1467,7 @@
     {
       "path": "packages/chat-ui/test/messages.test.tsx",
       "mode": 420,
-      "sha256": "75456ad1c30d7257c60510605a1530ff3bf1b5919a046682d301b33002279c23"
+      "sha256": "26229d70e4c9f573a086face4c7a421d776bfb00a14730d80a57835482597785"
     },
     {
       "path": "packages/chat-ui/test/projection.test.ts",
@@ -1762,7 +1792,7 @@
     {
       "path": "packages/remote-web/src/i18n/chat-ui-zh.ts",
       "mode": 420,
-      "sha256": "66473d3e5eb96dd29412bfed170bffff502cd3e6b69c22aea2201f92e8022144"
+      "sha256": "2725e7058c8b17fa0be2e35a179a6ed6e192e9464ea09a51632fbddd91f59838"
     },
     {
       "path": "packages/remote-web/src/i18n/en.ts",
@@ -1807,7 +1837,7 @@
     {
       "path": "packages/remote-web/src/styles/remote-web.css",
       "mode": 420,
-      "sha256": "52246a2bed0c25367523787b9caa9fb8f9d1af408aba1af07e1508a0951ca52b"
+      "sha256": "e8e2d6885d90702b535a91d5500bbcf09af03a6eb018978c5667325c9a4f565b"
     },
     {
       "path": "packages/remote-web/src/styles/tokens.css",
@@ -1872,7 +1902,7 @@
     {
       "path": "packages/remote-web/src/ui/composer.tsx",
       "mode": 420,
-      "sha256": "fbf014557ac6abe92b4702f995238fa2437dfa03d45f27120110301aa1873f76"
+      "sha256": "a6dc96870007de3fd31c46187e2adbf27111c7f41fbf88ec23e4184daa2649f2"
     },
     {
       "path": "packages/remote-web/src/ui/controller-context.tsx",
@@ -1957,7 +1987,7 @@
     {
       "path": "packages/remote-web/test/chat-composer.test.tsx",
       "mode": 420,
-      "sha256": "9b10a2e1c1f7f01f82603cfdd3a7e956f32f2f579015f81fe6b18f2c532a6e50"
+      "sha256": "f97be2545a623bcfcbcafd823b27f914d178fd7afcfefabab335e2228d6095ad"
     },
     {
       "path": "packages/remote-web/test/ciphertext-pacer.test.ts",
@@ -2122,7 +2152,7 @@
     {
       "path": "packages/shared/src/agents.ts",
       "mode": 420,
-      "sha256": "a63f943ce305174ff3dc989685da3a57b3f3d8b691ab2b18d509232219bf9ee7"
+      "sha256": "6c096eaa3c61119a73502f9686f20c2ca644924b8e1e259850c50b36ab73c8e7"
     },
     {
       "path": "packages/shared/src/bounded-path.ts",
@@ -2137,12 +2167,12 @@
     {
       "path": "packages/shared/src/browser.ts",
       "mode": 420,
-      "sha256": "dbe05b0499c908477353fc987a8bb046bd28c616316d29cf19fc1881aeada64c"
+      "sha256": "1c60c9454e304761a7eadf30809728ad2bc3dc8478ff52b5468eeb2a84d5eff5"
     },
     {
       "path": "packages/shared/src/context.ts",
       "mode": 420,
-      "sha256": "3b3be92c890f6fc8b53456f98113c3b0f39abfb52b2c2306a9c7bff95c2050b9"
+      "sha256": "e0bc077b59b68855c80c336d82b231ab4db035028fa6e6da3ab16b03d6f3be85"
     },
     {
       "path": "packages/shared/src/events.ts",
@@ -2212,7 +2242,7 @@
     {
       "path": "packages/shared/src/proxy.ts",
       "mode": 420,
-      "sha256": "40fc97a1d63d00f0db8a82a0fde2e9d11528ab2620d328b4af28d7abba4ef169"
+      "sha256": "096b73d034a6c557a9aa8a976f5ac7d56c43d475dd02c26541685fc77df7bff1"
     },
     {
       "path": "packages/shared/src/remote-settings.ts",
@@ -2227,7 +2257,7 @@
     {
       "path": "packages/shared/src/runtime-contracts.ts",
       "mode": 420,
-      "sha256": "6a549f408f34886efcfcc4b12a80decb04ec306fb43b7ca02e5c7c53830e31a2"
+      "sha256": "609f096b9dc8a451067e7d3af4e65378a809d539dad869ebb40f9582237973a4"
     },
     {
       "path": "packages/shared/src/schedule.ts",
@@ -2252,7 +2282,7 @@
     {
       "path": "packages/shared/src/tool.ts",
       "mode": 420,
-      "sha256": "1c20b45656973d41971060c35db7b5a1b207acbc010fb4dc13f82c407769e7cb"
+      "sha256": "b97fe388a28305a10452ac9198b3055f550352849f878fa571c61456342d7f07"
     },
     {
       "path": "packages/shared/src/trace.ts",
@@ -2302,7 +2332,7 @@
     {
       "path": "release.json",
       "mode": 420,
-      "sha256": "f1126963e0239c54ba8f0f6faebec9d26bb0fff98f8bbbbf6743166b276bbf64"
+      "sha256": "66559749e925a277b1183f285e27cbe1c9e52451fc0285f087cf742df6c91260"
     },
     {
       "path": "runtime.env.example",

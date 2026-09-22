@@ -421,6 +421,11 @@ export function UserMessage({
                   } : undefined}
                 >
                   <img src={a.url} alt={a.name} />
+                  {/* Per-message attachment number (document/array position,
+                      1-based — the same N the compiled prompt's
+                      [Attached resource N] uses). Inline preview only; the
+                      lightbox stays clean. */}
+                  <span className="msg-att-num" aria-hidden="true">{i + 1}</span>
                 </a>
               ) : (
                 <a

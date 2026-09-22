@@ -995,6 +995,7 @@ textarea.approval-text-field { min-height: 48px; resize: vertical; }
 .msg.user .msg-attachments { justify-content: flex-end; margin-bottom: 4px; }
 .msg-att {
   display: block;
+  position: relative;
   border-radius: var(--r-2);
   overflow: hidden;
   background: var(--surface-2);
@@ -1009,6 +1010,24 @@ textarea.approval-text-field { min-height: 48px; resize: vertical; }
   height: auto;
 }
 .msg-att.zoomable { cursor: zoom-in; }
+/* Per-message attachment number, bottom-right on the inline preview. Dark
+   translucent chip reads on any image; the lightbox never shows it. */
+.msg-att-num,
+.ref-pop-badge {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  box-sizing: border-box;
+  background: oklch(0 0 0 / 0.55);
+  color: oklch(1 0 0 / 0.95);
+  font: 600 10px/16px var(--font-sans);
+  text-align: center;
+  pointer-events: none;
+}
 .msg-file-att {
   min-width: 0;
   max-width: 280px;
@@ -1091,14 +1110,15 @@ textarea.approval-text-field { min-height: 48px; resize: vertical; }
   font-weight: 600;
 }
 /* Context chips read as @-mentions; the glyph lives in CSS so it never
- * pollutes text content, copy, or selection. File-reference chips render a
- * real file icon instead, so the '@' is suppressed. */
+ * pollutes text content, copy, or selection. File- and session-reference
+ * chips render a real icon instead, so the '@' is suppressed. */
 .message-inline-reference[data-reference-type="context"]::before {
   content: '@';
   color: var(--text-3);
   font-weight: 600;
 }
-.message-inline-reference[data-reference-kind="file"]::before {
+.message-inline-reference[data-reference-kind="file"]::before,
+.message-inline-reference[data-reference-kind="session"]::before {
   content: none;
 }
 .mir-glyph svg { width: 11px; height: 11px; }
@@ -1230,6 +1250,16 @@ textarea.approval-text-field { min-height: 48px; resize: vertical; }
   white-space: normal;
   color: var(--text);
 }
+.ref-pop-thumb-wrap {
+  position: relative;
+  display: inline-block;
+  align-self: flex-start;
+  line-height: 0;
+}
+.ref-pop-thumb-wrap .ref-pop-thumb {
+  /* The wrapper owns the flex alignment now. */
+  align-self: auto;
+}
 .ref-pop-thumb {
   display: block;
   /* flex-none alone is not enough: as a column-flex child the default
@@ -1260,6 +1290,51 @@ textarea.approval-text-field { min-height: 48px; resize: vertical; }
   text-decoration: none;
 }
 .ref-pop-download:hover { text-decoration: underline; }
+
+/* Web-link hover preview (unfurl) — lives inside .ref-pop, shares its quiet
+ * chrome and theme tokens. */
+.link-preview {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 10px 12px;
+  min-width: 0;
+}
+.link-preview-favicon {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  margin-top: 1px;
+  border-radius: var(--r-1);
+}
+.link-preview-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.link-preview-title {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.link-preview-desc {
+  overflow: hidden;
+  color: var(--text-2);
+  font-size: 11.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.link-preview-domain {
+  overflow: hidden;
+  color: var(--text-3);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 /* ── from shell-v2.css: user-message reset + message footer ─────────────── */
 

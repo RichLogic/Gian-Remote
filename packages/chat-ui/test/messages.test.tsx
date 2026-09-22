@@ -64,6 +64,24 @@ describe('UserMessage', () => {
     expect(chip.textContent).toContain('2.0 KB');
   });
 
+  it('numbers image previews with a corner badge in attachment order; files get none', () => {
+    const { container } = render(
+      <UserMessage item={userMsg({
+        text: '',
+        attachments: [
+          { name: 'one.png', mime: 'image/png', url: '/api/x/one.png' },
+          { name: 'notes.txt', mime: 'text/plain', url: '/api/x/notes.txt' },
+          { name: 'two.png', mime: 'image/png', url: '/api/x/two.png' },
+        ],
+      })} />,
+    );
+    // N = 1-based position among ALL of the message's attachments — the same
+    // N the compiled prompt's [Attached resource N] uses.
+    const badges = [...container.querySelectorAll('.msg-att .msg-att-num')].map(el => el.textContent);
+    expect(badges).toEqual(['1', '3']);
+    expect(container.querySelector('.msg-file-att .msg-att-num')).toBeNull();
+  });
+
   it('routes attachments through an app-owned secure opener when provided', async () => {
     const user = userEvent.setup();
     const open = vi.fn();

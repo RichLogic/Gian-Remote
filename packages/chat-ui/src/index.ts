@@ -37,6 +37,12 @@ export {
   type LinkBehavior,
 } from './links/LinkBehaviorContext.js';
 export { LinkAnchor } from './links/LinkAnchor.js';
+export {
+  LinkPreviewContext,
+  useLinkPreview,
+  type LinkPreview,
+  type LinkPreviewFetcher,
+} from './links/preview-context.js';
 export { LinkifiedText, splitLinkTokens, type LinkTextToken } from './links/linkify-text.js';
 export { LinkKindIcon } from './links/link-icons.js';
 export { CopyButton } from './copy-button.js';

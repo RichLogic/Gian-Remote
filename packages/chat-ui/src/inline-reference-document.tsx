@@ -23,6 +23,7 @@ function contextTitle(item: MessageContextItem | undefined, fallback: string): s
   if (!item) return fallback;
   if (item.type === 'folder') return item.path;
   if (item.type === 'file') return item.path;
+  if (item.type === 'session') return item.workspaceName ?? item.title;
   if (item.type === 'browserElement') {
     return [item.name, item.selector, item.pageUrl].filter(Boolean).join(' - ');
   }
@@ -59,6 +60,9 @@ export function InlineReferenceDocument({
     key: string;
     attachment: InlineReferenceAttachment;
     label: string;
+    /** Document-order attachment number (1-based) — the same N the compiled
+     *  prompt's [Attached resource N] uses. */
+    index: number;
     anchor: ReferenceAnchor;
     anchorEl: Element;
   } | null>(null);
@@ -72,24 +76,28 @@ export function InlineReferenceDocument({
         if (segment.type === 'text') return <span key={index}><LinkifiedText text={segment.text} /></span>;
         if (segment.referenceType === 'context') {
           const contextItem = contextItems.find(item => item.id === segment.id);
-          const fileGlyph = (
-            <span className="mir-glyph" aria-hidden="true">{REFERENCE_ICONS.file}</span>
+          const referenceGlyph = (kind: 'file' | 'session') => (
+            <span className="mir-glyph" aria-hidden="true">{REFERENCE_ICONS[kind]}</span>
           );
           if (!contextItem) {
+            const kind = segment.kind === 'file' || segment.kind === 'session' ? segment.kind : null;
             return (
               <span
                 key={`${segment.id}-${index}`}
                 className="message-inline-reference"
                 data-reference-id={segment.id}
                 data-reference-type="context"
-                {...(segment.kind === 'file' ? { 'data-reference-kind': 'file' } : {})}
+                {...(kind ? { 'data-reference-kind': kind } : {})}
                 title={segment.label}
               >
-                {segment.kind === 'file' && fileGlyph}
+                {kind && referenceGlyph(kind)}
                 <span className="mir-label">{segment.label}</span>
               </span>
             );
           }
+          const itemKind = contextItem.type === 'file' || contextItem.type === 'session'
+            ? contextItem.type
+            : null;
           return (
             <button
               key={`${segment.id}-${index}`}
@@ -97,7 +105,7 @@ export function InlineReferenceDocument({
               className="message-inline-reference"
               data-reference-id={segment.id}
               data-reference-type="context"
-              {...(contextItem.type === 'file' ? { 'data-reference-kind': 'file' } : {})}
+              {...(itemKind ? { 'data-reference-kind': itemKind } : {})}
               title={contextTitle(contextItem, segment.label)}
               onMouseEnter={event => {
                 const el = event.currentTarget;
@@ -112,7 +120,7 @@ export function InlineReferenceDocument({
               }}
               onBlur={() => hover.scheduleClose(() => setPreview(null))}
             >
-              {contextItem.type === 'file' && fileGlyph}
+              {itemKind && referenceGlyph(itemKind)}
               <span className="mir-label">{segment.label}</span>
             </button>
           );
@@ -143,12 +151,12 @@ export function InlineReferenceDocument({
               title={attachment.name}
               onMouseEnter={event => {
                 const el = event.currentTarget;
-                hover.scheduleOpen(() => setAttachmentPreview({ key, attachment, label: segment.label, anchor: el.getBoundingClientRect(), anchorEl: el }));
+                hover.scheduleOpen(() => setAttachmentPreview({ key, attachment, label: segment.label, index: attachmentIndex, anchor: el.getBoundingClientRect(), anchorEl: el }));
               }}
               onMouseLeave={() => hover.scheduleClose(() => setAttachmentPreview(null))}
               onFocus={event => {
                 const el = event.currentTarget;
-                hover.scheduleOpen(() => setAttachmentPreview({ key, attachment, label: segment.label, anchor: el.getBoundingClientRect(), anchorEl: el }));
+                hover.scheduleOpen(() => setAttachmentPreview({ key, attachment, label: segment.label, index: attachmentIndex, anchor: el.getBoundingClientRect(), anchorEl: el }));
               }}
               onBlur={() => hover.scheduleClose(() => setAttachmentPreview(null))}
               onClick={() => {
@@ -198,12 +206,15 @@ export function InlineReferenceDocument({
           />
           <div className="ref-pop-body">
             {isNativeImageMime(attachmentPreview.attachment.mime ?? '') && attachmentPreview.attachment.url && (
-              <img
-                className="ref-pop-thumb"
-                src={attachmentPreview.attachment.url}
-                alt={attachmentPreview.attachment.name}
-                onClick={() => onAttachmentActivate?.(attachmentPreview.attachment)}
-              />
+              <span className="ref-pop-thumb-wrap">
+                <img
+                  className="ref-pop-thumb"
+                  src={attachmentPreview.attachment.url}
+                  alt={attachmentPreview.attachment.name}
+                  onClick={() => onAttachmentActivate?.(attachmentPreview.attachment)}
+                />
+                <span className="ref-pop-badge" aria-hidden="true">{attachmentPreview.index + 1}</span>
+              </span>
             )}
             {attachmentPreview.attachment.size !== undefined && (
               <span className="ref-pop-meta">{formatBytes(attachmentPreview.attachment.size)}</span>

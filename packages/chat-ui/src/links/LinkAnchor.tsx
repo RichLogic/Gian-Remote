@@ -16,6 +16,7 @@
 import { useLinkBehavior, useLinkPolicy } from './LinkBehaviorContext.js';
 import { classifyLink, type LinkTarget } from './classify.js';
 import { LinkKindIcon } from './link-icons.js';
+import { WebLink } from './LinkPreviewCard.js';
 import { useChatUiT } from '../i18n.js';
 
 export function LinkAnchor(props: {
@@ -37,31 +38,15 @@ export function LinkAnchor(props: {
   if (display === 'inert') return <InertLink target={target} icon={icon} note={t('links.unavailable')}>{props.children}</InertLink>;
 
   switch (target.kind) {
-    case 'web': {
-      const openWebUrl = behavior?.openWebUrl;
-      if (openWebUrl) {
-        return (
-          <a
-            href={target.href}
-            data-link-kind={target.kind}
-            rel="noreferrer noopener"
-            onClick={event => {
-              event.preventDefault();
-              openWebUrl(target.href);
-            }}
-          >
-            {icon}
-            {props.children}
-          </a>
-        );
-      }
+    case 'web':
+      // WebLink owns the anchor variants (openWebUrl routing vs. the plain
+      // `_blank` fallback) plus the hover preview card when a
+      // LinkPreviewContext is mounted.
       return (
-        <a href={target.href} data-link-kind={target.kind} target="_blank" rel="noreferrer noopener">
-          {icon}
+        <WebLink href={target.href} openWebUrl={behavior?.openWebUrl} icon={icon}>
           {props.children}
-        </a>
+        </WebLink>
       );
-    }
     case 'file': {
       const openFile = behavior?.openFile;
       const abs = target.fileAbs!;

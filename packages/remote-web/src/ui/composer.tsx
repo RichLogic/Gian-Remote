@@ -11,6 +11,7 @@
 import { useRef, useState } from 'react';
 import type { RemoteSession } from '@gian/remote-protocol';
 import type { EffectiveCapabilities } from '@gian/remote-protocol';
+import { isNativeImageMime } from '@gian/chat-ui';
 import { draftIsEmpty, emptyDraft, mutationsEnabled } from '../controller/types.js';
 import type { DraftState } from '../controller/types.js';
 import { useT } from '../i18n/index.js';
@@ -34,10 +35,15 @@ function DraftChips({ sessionId, draft, disabled }: { sessionId: string; draft: 
   if (draft.attachments.length === 0 && draft.contextItems.length === 0 && !draft.document) return null;
   return (
     <div className="composer-chips">
-      {draft.attachments.map((a) => (
+      {draft.attachments.map((a, index) => (
         <span key={a.id} className="composer-chip" data-kind="attachment">
           <Icon name="file" size={12} />
-          {a.name}
+          {/* Images read as image<N> (N = 1-based position among the
+              message's attachments) — the same numbering the main composer
+              applies at send time. The real name stays in the tooltip. */}
+          {isNativeImageMime(a.mime) ? (
+            <span title={a.name}>{`image${index + 1}`}</span>
+          ) : a.name}
           <button
             type="button"
             className="chip-x"

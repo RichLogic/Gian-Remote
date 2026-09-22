@@ -247,7 +247,13 @@ input, select, textarea {
 }
 .rail-item.session-row { padding-left: 30px; }
 .rail-item:hover { background: var(--surface); }
-.rail-item.active { background: var(--surface-2); }
+/* Selected reads at a glance, clearly above the --surface hover wash: one
+   ramp step deeper (--surface-3), a left accent edge, and a 600 title. */
+.rail-item.active {
+  background: var(--surface-3);
+  box-shadow: inset 3px 0 0 0 var(--accent);
+}
+.rail-item.active .ri-title { font-weight: 600; }
 .ri-row1 { display: flex; align-items: center; gap: 6px; }
 .session-row .ri-row1 { padding-right: 0; }
 .session-row.has-status .ri-row1 { padding-right: 26px; }
@@ -333,7 +339,8 @@ input, select, textarea {
   display: flex;
   align-items: center;
   gap: 4px;
-  width: 100%;
+  /* No width:100% — with the 2px side margins it overflowed the scroll
+   *  container by 4px and produced a stray horizontal scrollbar. */
   margin: 10px 2px 2px;
   padding: 2px 8px;
   border-radius: var(--r-1);

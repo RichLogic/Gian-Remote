@@ -200,6 +200,11 @@ function isMessageContextItem(value: unknown): boolean {
   if (value.type === 'folder' || value.type === 'file') {
     return isString(value.path) && isString(value.name);
   }
+  if (value.type === 'session') {
+    return isString(value.sessionId)
+      && isString(value.title)
+      && isOptional(value, 'workspaceName', isString);
+  }
   if (value.type === 'browserElement') {
     const normalized = normalizeBrowserElementCapture(value);
     return normalized !== null

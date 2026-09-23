@@ -21,6 +21,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ReferencePopover, useHoverPreview, type ReferenceAnchor } from '../reference-popover.js';
 import { useLinkPreview, type LinkPreview, type LinkPreviewFetcher } from './preview-context.js';
+import { recordLinkFavicon } from './favicon-store.js';
 
 const sessionCaches = new WeakMap<LinkPreviewFetcher, Map<string, LinkPreview | null>>();
 
@@ -31,6 +32,14 @@ function sessionCache(fetcher: LinkPreviewFetcher): Map<string, LinkPreview | nu
     sessionCaches.set(fetcher, cache);
   }
   return cache;
+}
+
+/** Feed the icon favicon store under both the hovered href's origin and the
+ *  final (post-redirect) URL's origin — either may key the rendered link. */
+function recordFavicon(href: string, preview: LinkPreview | null): void {
+  if (!preview?.faviconUrl) return;
+  recordLinkFavicon(href, preview.faviconUrl);
+  recordLinkFavicon(preview.url, preview.faviconUrl);
 }
 
 export function WebLink({
@@ -66,6 +75,7 @@ export function WebLink({
     const cached = cache.get(href);
     if (cached === null) return; // known-unavailable: stay silent
     if (cached !== undefined) {
+      recordFavicon(href, cached);
       setCard({ anchor, preview: cached });
       return;
     }
@@ -77,6 +87,11 @@ export function WebLink({
     fetcher.fetchPreview(href, controller.signal)
       .then(preview => {
         cache.set(href, preview);
+        // Favicon upgrade: the already-fetched preview feeds the per-origin
+        // icon store, so every link to that origin swaps its glyph for the
+        // real favicon. Recording is safe even when this hover was aborted —
+        // no new fetch is involved.
+        recordFavicon(href, preview);
         if (controller.signal.aborted) return;
         // A failed fetch closes the optimistic card again — nothing extra
         // is rendered, and the negative cache entry silences re-hovers.

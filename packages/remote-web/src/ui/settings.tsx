@@ -164,6 +164,7 @@ export function SettingsBody() {
           </>
         )}
       </div>
+      <div className="rw-set-sec"><a href="/enrollment">{t('enrollment.title')}</a></div>
     </div>
   );
 }

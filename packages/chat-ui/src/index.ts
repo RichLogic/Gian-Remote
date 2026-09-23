@@ -45,6 +45,11 @@ export {
 } from './links/preview-context.js';
 export { LinkifiedText, splitLinkTokens, type LinkTextToken } from './links/linkify-text.js';
 export { LinkKindIcon } from './links/link-icons.js';
+export {
+  recordLinkFavicon,
+  clearLinkFavicons,
+  useLinkFavicon,
+} from './links/favicon-store.js';
 export { CopyButton } from './copy-button.js';
 export * from './items.js';
 export { ApprovalLine } from './approval-cards.js';

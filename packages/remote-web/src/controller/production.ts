@@ -1,8 +1,16 @@
 import {
+  ACCOUNT_PROTOCOL,
+  accountLoginStartedSchema,
+  accountLoginResultSchema,
+  remoteAccountChallengePayload,
+  exportPublicJwk,
+  type AccountLoginStarted,
+  type AccountLoginResult,
   REMOTE_METHOD_RESULTS,
   CONTENT_WINDOW_CHUNKS,
   PAIRING_TTL_MS,
   RemoteProtocolError,
+  isRemoteErrorCode,
   addSnapshotPart,
   attachmentResultSchema,
   canonicalEventSchema,
@@ -21,6 +29,7 @@ import {
   transcriptPageSchema,
   type SnapshotPartAssembly,
   remoteStateSnapshotSchema,
+  remoteFileRefSchema,
   selfRevokePayload,
   signBytes,
   statePatchSchema,
@@ -200,9 +209,17 @@ export function createProductionController(options: ProductionControllerOptions)
   /** Hosts whose protocol predates `proxy.logo` (INVALID_FRAME on first try). */
   const logoUnsupportedHosts = new Set<string>();
   /** Proxy/variant pairs a Host reported missing; no retry against that Host. */
-  const logoMisses = new Set<string>();
+  const logoMisses = new Map<string, number>();
+  const logoRetries = new Map<string, number>();
+  const logoRetryTimers = new Set<ReturnType<typeof setTimeout>>();
 
   let state: RemoteUiState = emptyUiState();
+  state.account = { status: 'signed_out' };
+  let accountSession: Extract<AccountLoginResult, { status: 'authorized' }> | null = null;
+  let accountPending: { started: AccountLoginStarted; signature: string } | null = null;
+  let accountPolling = false;
+  let accountGeneration = 0;
+  let fileGeneration = 0;
   const hostSelection = options.hostSelection ?? createHostSelectionStore();
   let navigationGeneration = 0;
   let pairingReturnHostId: string | null = null;
@@ -489,7 +506,7 @@ export function createProductionController(options: ProductionControllerOptions)
       || method === 'session.subscribe'
       || method === 'session.page'
       || method === 'command.status'
-      || method === 'proxy.logo';
+      || method === 'proxy.logo' || method === 'file.preview' || method === 'file.resolve' || method === 'file.tree';
     const transport = boundRelay();
     if (!transport) {
       if (!readable) throw new RemoteProtocolError('HOST_OFFLINE', 'Host relay is not connected');
@@ -544,7 +561,7 @@ export function createProductionController(options: ProductionControllerOptions)
   }
 
   async function sendReadCommand(
-    method: 'catalog.read' | 'state.refresh' | 'session.subscribe' | 'session.page',
+    method: 'catalog.read' | 'state.refresh' | 'session.subscribe' | 'session.page' | 'proxy.logo',
     params: unknown,
     label: string,
     recoverOnDisconnect = true,
@@ -583,22 +600,32 @@ export function createProductionController(options: ProductionControllerOptions)
       .filter(proxy => proxy !== 'unknown');
     for (const proxy of proxies) {
       for (const variant of ['light', 'dark'] as const) {
-        const key = `${proxy}:${variant}`;
-        if (state.logos[proxy]?.[variant] || logoInflight.has(key) || logoMisses.has(`${hostId}:${key}`)) continue;
+        const key = `${hostId}:${proxy}:${variant}`;
+        if (state.logos[proxy]?.[variant] || logoInflight.has(key) || (logoMisses.get(key) ?? 0) > Date.now()) continue;
         logoInflight.add(key);
-        void sendCommand('proxy.logo', { proxy, variant }, 'proxy.logo')
+        void sendReadCommand('proxy.logo', { proxy, variant }, 'proxy.logo')
           .then((data) => {
-            if (data === undefined) return;
+            if (data === undefined || state.currentHostId !== hostId || closed) return;
             const logo = parseClosed(proxyLogoResultSchema, data);
             const url = `data:${logo.media_type};base64,${logo.data_base64}`;
             update({ logos: { ...state.logos, [proxy]: { ...state.logos[proxy], [variant]: url } } });
+            logoMisses.delete(key); logoRetries.delete(key);
           })
           .catch((error) => {
             const code = errorCode(error);
-            if (code === 'INVALID_FRAME' || code === 'REMOTE_CAPABILITY_DENIED') {
+            if (code === 'INVALID_FRAME') {
               logoUnsupportedHosts.add(hostId);
             } else {
-              logoMisses.add(`${hostId}:${key}`);
+              logoMisses.set(key, Date.now() + 5000);
+              const attempt = (logoRetries.get(key) ?? 0) + 1;
+              logoRetries.set(key, attempt);
+              if (attempt <= 3) {
+                const timer = setTimeout(() => {
+                  logoRetryTimers.delete(timer);
+                  if (!closed && state.currentHostId === hostId && state.catalog) ensureProxyLogos(state.catalog);
+                }, 5100);
+                logoRetryTimers.add(timer);
+              }
             }
           })
           .finally(() => logoInflight.delete(key));
@@ -944,7 +971,8 @@ export function createProductionController(options: ProductionControllerOptions)
       pending.delete(commandId);
       if (!message.ok) {
         const code = String((message.error as { code?: string } | undefined)?.code ?? 'UNKNOWN_OUTCOME');
-        if (pendingCommand?.method === 'file.preview' && state.fileViewer) {
+        if (pendingCommand?.method === 'file.preview' && state.fileViewer
+          && (pendingCommand.params as { handle_id?: string })?.handle_id === state.fileViewer.handle.id) {
           update({ fileViewer: viewerFromPreviewError(state.fileViewer.handle, code) });
         }
         finishMutation(
@@ -955,7 +983,7 @@ export function createProductionController(options: ProductionControllerOptions)
           showsUnknownOutcome(pendingCommand.method),
         );
         pendingCommand?.reject(new RemoteProtocolError(
-          code === 'UNKNOWN_OUTCOME' ? 'UNKNOWN_OUTCOME' : 'INVALID_FRAME',
+          isRemoteErrorCode(code) ? code : 'INVALID_FRAME',
           String((message.error as { message?: string } | undefined)?.message ?? code),
         ));
         return;
@@ -1024,6 +1052,7 @@ export function createProductionController(options: ProductionControllerOptions)
     if (method === 'file.preview' && state.fileViewer) {
       const preview = parseClosed(filePreviewResultSchema, data);
       const handle = state.fileViewer.handle;
+      if (handle.id !== preview.file.id) return;
       const transferId = preview.transfer_id;
       const transport = transferRelay();
       if (!transport || (hostId && transport.hostId !== hostId)) {
@@ -1178,13 +1207,25 @@ export function createProductionController(options: ProductionControllerOptions)
   async function refreshPairedHosts(isCurrent: () => boolean): Promise<void> {
     try {
       const me = await auth.me();
+      const hosts = await mergeRememberedHosts(me.hosts ?? []);
       if (!isCurrent()) return;
-      update({ hosts: (me.hosts ?? []).map(host => ({
-        ...state.hosts.find(existing => existing.id === host.host_id),
-        id: host.host_id, name: host.name, online: host.online,
-        sessionCount: state.hosts.find(existing => existing.id === host.host_id)?.sessionCount ?? 0,
-      })) });
+      update({ hosts });
     } catch { /* A directory refresh must not interrupt a working Host connection. */ }
+  }
+
+  async function mergeRememberedHosts(authorized: Array<{ host_id: string; name: string; online: boolean }>): Promise<RemoteHostEntry[]> {
+    // A browser cookie is scoped to one confirmed Host delegation. Other
+    // remembered Hosts remain selectable but require their own key challenge.
+    const hosts = new Map<string, RemoteHostEntry>();
+    for (const id of await identity.listHostIds()) {
+      hosts.set(id, state.hosts.find(host => host.id === id)
+        ?? { id, name: 'Gian Host', online: false, sessionCount: 0 });
+    }
+    for (const host of authorized) hosts.set(host.host_id, {
+      ...hosts.get(host.host_id), id: host.host_id, name: host.name, online: host.online,
+      sessionCount: hosts.get(host.host_id)?.sessionCount ?? 0,
+    });
+    return [...hosts.values()];
   }
 
   async function authenticateHost(
@@ -1417,13 +1458,8 @@ export function createProductionController(options: ProductionControllerOptions)
     const generation = navigationGeneration;
     try {
       const me = await auth.me();
+      const hosts = await mergeRememberedHosts(me.hosts ?? []);
       if (closed || generation !== navigationGeneration || state.addingHost) return;
-      const hosts = (me.hosts ?? []).map((host) => ({
-        id: host.host_id,
-        name: host.name,
-        online: host.online,
-        sessionCount: 0,
-      }));
       if (hosts.length === 0) {
         await restoreRememberedHosts();
         return;
@@ -1557,7 +1593,83 @@ export function createProductionController(options: ProductionControllerOptions)
     }
   }
 
+  async function acceptAccount(result: Extract<AccountLoginResult, { status: 'authorized' }>): Promise<void> {
+    const generation = accountGeneration;
+    if (!accountSession) {
+      const stored = accountLoginResultSchema.safeParse(await cache.get('__account__'));
+      if (closed || generation !== accountGeneration) return;
+      if (stored.success && stored.data.status === 'authorized') accountSession = stored.data;
+    }
+    const previous = accountSession;
+    ++navigationGeneration;
+    ++pairingGeneration;
+    ++fileGeneration;
+    cancelReconnect();
+    if (pollTimer) clearTimeout(pollTimer);
+    if (state.currentHostId) retireHostSession(state.currentHostId, 'replaced');
+    hostSessions.clear();
+    if (accountSession && accountSession.account.id !== result.account.id) {
+      await cache.clear();
+      await identity.clearAll();
+      hostSessions.clear(); hostDrafts.clear();
+      update({ ...emptyUiState(), account: { status: 'signed_out' } });
+    }
+    if (closed || generation !== accountGeneration) return;
+    accountSession = result;
+    http.setAccountToken?.(result.account_token);
+    await cache.put('__account__', result);
+    if (previous && previous.account_token !== result.account_token) {
+      void http.request('/api/v1/account/logout', { protocol: ACCOUNT_PROTOCOL }, previous.account_token).catch(() => undefined);
+    }
+    if (closed || generation !== accountGeneration) return;
+    update({ account: { status: 'signed_in', login: result.account.login } });
+    if (options.autoRestore !== false && !qrNonce) requestRestore();
+  }
+
   const actions: RemoteUiActions = {
+    startGitHubLogin() {
+      const generation = ++accountGeneration;
+      accountPending = null;
+      update({ account: { status: 'pending' } });
+      void (async () => {
+        const keys = await crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, false, ['sign', 'verify']);
+        const started = parseClosed(accountLoginStartedSchema, await http.request('/api/v1/account/start', {
+          protocol: ACCOUNT_PROTOCOL, peer: { role: 'controller', installation_id: generateCanonicalId(),
+            public_key: await exportPublicJwk(keys.publicKey) },
+        }));
+        const signature = await signBytes(keys.privateKey,
+          new TextEncoder().encode(remoteAccountChallengePayload(started.challenge)));
+        if (closed || generation !== accountGeneration) return;
+        accountPending = { started, signature };
+        update({ account: { status: 'pending', userCode: started.user_code,
+          expiresAt: started.expires_at, intervalSeconds: started.interval_seconds } });
+      })().catch(() => {
+        if (!closed && generation === accountGeneration) update({ account: { status: 'error' } });
+      });
+    },
+    pollGitHubLogin() {
+      if (!accountPending || accountPolling) return;
+      const pendingLogin = accountPending;
+      const generation = accountGeneration;
+      accountPolling = true;
+      void (async () => {
+        const result = parseClosed(accountLoginResultSchema, await http.request('/api/v1/account/poll', {
+          protocol: ACCOUNT_PROTOCOL, login_id: pendingLogin.started.login_id, signature: pendingLogin.signature,
+        }));
+        if (closed || generation !== accountGeneration) return;
+        if (result.status === 'authorized') {
+          accountPending = null;
+          await acceptAccount(result);
+        } else if (result.status === 'pending') {
+          update({ account: { ...state.account!, intervalSeconds: result.interval_seconds } });
+        } else {
+          accountPending = null;
+          update({ account: { status: 'error' } });
+        }
+      })().catch(() => {
+        if (!closed && generation === accountGeneration) update({ account: { status: 'error' } });
+      }).finally(() => { accountPolling = false; });
+    },
     restoreBrowserSession() {
       requestRestore();
     },
@@ -1833,10 +1945,29 @@ export function createProductionController(options: ProductionControllerOptions)
       });
     },
     openFile(handle) {
+      const generation = ++fileGeneration;
       update({ fileViewer: { status: 'loading', handle } });
-      dispatchCommand('file.preview', { handle_id: handle.id }, 'file.preview');
+      const hostId = state.currentHostId;
+      void (async () => {
+        let selected = handle;
+        {
+          const resolved = parseClosed(remoteFileRefSchema, await withTimeout(sendCommand('file.resolve', {
+            session_id: handle.sessionId, reference: handle.id,
+          }, 'file.resolve', { recoverOnDisconnect: false }), readTimeoutMs, 'file reference timed out'));
+          if (generation !== fileGeneration || state.currentHostId !== hostId || state.fileViewer?.handle !== handle) return;
+          selected = { ...handle, id: resolved.id, label: resolved.name };
+          update({ fileViewer: { status: 'loading', handle: selected } });
+        }
+        await withTimeout(sendCommand('file.preview', { handle_id: selected.id }, 'file.preview',
+          { recoverOnDisconnect: false }), readTimeoutMs, 'file preview timed out');
+      })().catch(error => {
+        if (generation === fileGeneration && state.currentHostId === hostId && state.fileViewer?.status === 'loading') {
+          update({ fileViewer: viewerFromPreviewError(state.fileViewer.handle, errorCode(error)) });
+        }
+      });
     },
     closeFile() {
+      ++fileGeneration;
       update({ fileViewer: null, fileDownload: { status: 'idle' } });
     },
     reloadFile() {
@@ -1887,16 +2018,29 @@ export function createProductionController(options: ProductionControllerOptions)
     },
     logoutBrowser() {
       void (async () => {
+        ++accountGeneration;
+        ++navigationGeneration;
+        ++pairingGeneration;
+        ++fileGeneration;
+        cancelReconnect();
+        if (pollTimer) clearTimeout(pollTimer);
+        if (state.currentHostId) retireHostSession(state.currentHostId, 'disconnected');
+        accountPending = null;
+        if (accountSession) await http.request('/api/v1/account/logout', { protocol: ACCOUNT_PROTOCOL }, accountSession.account_token).catch(() => undefined);
+        accountSession = null;
+        http.setAccountToken?.(null);
         cancelReconnect();
         if (state.currentHostId) bumpEpoch(state.currentHostId);
         await auth.logout().catch(() => undefined);
         await cache.clear();
+        await identity.clearAll();
         hostSessions.clear();
         hostDrafts.clear();
         abortAllDownloads();
         relay?.close('logout');
         clearRelayBinding();
         update({
+          account: { status: 'signed_out' },
           auth: { kind: 'challenge-login', hosts: state.hosts },
           connection: { kind: 'browser_offline' },
         });
@@ -1985,9 +2129,7 @@ export function createProductionController(options: ProductionControllerOptions)
     },
   };
 
-  if (options.autoRestore !== false && !qrNonce) {
-    requestRestore();
-  }
+  if (options.autoRestore !== false) requestRestore();
   browserEvents?.addEventListener('offline', handleBrowserOffline);
   browserEvents?.addEventListener('online', handleBrowserOnline);
 
@@ -2002,6 +2144,8 @@ export function createProductionController(options: ProductionControllerOptions)
     },
     close() {
       closed = true;
+      for (const timer of logoRetryTimers) clearTimeout(timer);
+      logoRetryTimers.clear();
       browserEvents?.removeEventListener('offline', handleBrowserOffline);
       browserEvents?.removeEventListener('online', handleBrowserOnline);
       ++pairingGeneration;
@@ -2088,8 +2232,8 @@ function omitKey(record: Record<string, string>, key: string): Record<string, st
 
 function isReplaySafeRead(
   method: RemoteMethod,
-): method is 'catalog.read' | 'state.refresh' | 'session.subscribe' | 'session.page' {
-  return method === 'catalog.read'
+): method is 'catalog.read' | 'state.refresh' | 'session.subscribe' | 'session.page' | 'proxy.logo' {
+  return method === 'proxy.logo' || method === 'catalog.read'
     || method === 'state.refresh'
     || method === 'session.subscribe'
     || method === 'session.page';

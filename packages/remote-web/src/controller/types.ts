@@ -227,6 +227,10 @@ export type AuthState =
 // ---------------------------------------------------------------------------
 
 export interface RemoteUiState {
+  account?: {
+    status: 'signed_out' | 'pending' | 'signed_in' | 'error';
+    login?: string; userCode?: string; expiresAt?: number; intervalSeconds?: number;
+  };
   addingHost?: boolean;
   connectionPhase?: 'auth' | 'relay' | 'sync';
   connectionFailed?: boolean;
@@ -287,6 +291,8 @@ export interface CreateSessionInput {
 }
 
 export interface RemoteUiActions {
+  startGitHubLogin?(): void;
+  pollGitHubLogin?(): void;
   // Host switching — state/cache are partitioned per Host by the controller.
   selectHost(hostId: string): void;
   restoreBrowserSession(): void;

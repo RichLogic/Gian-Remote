@@ -10,7 +10,37 @@ import {
 import type { ReferenceAnchor } from './reference-popover.js';
 import { formatBytes, isNativeImageMime } from './utils.js';
 import { useChatUiT } from './i18n.js';
-import { LinkifiedText } from './links/linkify-text.js';
+import { MarkdownText } from './markdown.js';
+
+/**
+ * One text segment of a composer document. The composer is a markdown editor,
+ * so the segment holds literal markdown and renders through the same
+ * `MarkdownText` pipeline as assistant messages. Reference chips split
+ * segments mid-paragraph, so `.user-md-seg` CSS keeps the segment's
+ * paragraphs inline and consecutive segments + chips read as one flow.
+ *
+ * Markdown swallows the newlines that separated a segment from a neighboring
+ * chip (`text\n` + chip, chip + `\n\ntext`), so boundary newlines come back
+ * as explicit elements: `.user-md-br` for a soft line break, `.user-md-gap`
+ * for a paragraph break.
+ */
+function UserMarkdownSegment({ text }: { text: string }) {
+  const leading = /^\n+/.exec(text)?.[0].length ?? 0;
+  const rest = text.slice(leading);
+  const trailing = /\n+$/.exec(rest)?.[0].length ?? 0;
+  const body = rest.slice(0, rest.length - trailing);
+  return (
+    <>
+      {leading > 1 ? <span className="user-md-gap" /> : leading === 1 ? <span className="user-md-br" /> : null}
+      {body.length > 0 && (
+        <span className="user-md-seg">
+          {/^[ \t]+$/.test(body) ? body : <MarkdownText preserveBoundarySpaces>{body}</MarkdownText>}
+        </span>
+      )}
+      {trailing > 1 ? <span className="user-md-gap" /> : trailing === 1 ? <span className="user-md-br" /> : null}
+    </>
+  );
+}
 
 export interface InlineReferenceAttachment {
   name: string;
@@ -73,7 +103,7 @@ export function InlineReferenceDocument({
   return (
     <span className={className ? `inline-reference-document ${className}` : 'inline-reference-document'}>
       {document.segments.map((segment, index) => {
-        if (segment.type === 'text') return <span key={index}><LinkifiedText text={segment.text} /></span>;
+        if (segment.type === 'text') return <UserMarkdownSegment key={index} text={segment.text} />;
         if (segment.referenceType === 'context') {
           const contextItem = contextItems.find(item => item.id === segment.id);
           const referenceGlyph = (kind: 'file' | 'session') => (

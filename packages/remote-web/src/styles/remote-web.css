@@ -7,6 +7,29 @@
 
 * { box-sizing: border-box; }
 
+.rw-enrollment { height: 100%; overflow-y: auto; letter-spacing: 0; }
+.rw-enrollment-header {
+  min-height: 64px; padding: 12px 24px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+}
+.rw-enrollment-back { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; }
+.rw-enrollment-content { width: min(100%, 640px); margin: 0 auto; padding: 32px 24px; display: grid; gap: 24px; }
+.rw-enrollment-content h1 { font-size: 24px; line-height: 1.3; margin: 0; }
+.rw-enrollment-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+.rw-enrollment-row label { grid-column: 1 / -1; }
+.rw-enrollment .rw-input { min-width: 0; width: 100%; font-size: 14px; }
+.rw-enrollment .btn { min-height: 44px; white-space: normal; border-radius: 7px; }
+.rw-enrollment-account { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.rw-enrollment-token { display: grid; gap: 12px; padding-top: 24px; border-top: 1px solid var(--border); }
+.rw-enrollment-token textarea { resize: none; font-family: var(--font-mono); overflow-wrap: anywhere; }
+.rw-enrollment-login { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.rw-enrollment-login code { font: 600 20px/1.5 var(--font-mono); }
+.rw-enrollment strong, .rw-enrollment a, .rw-enrollment p { overflow-wrap: anywhere; }
+@media (max-width: 480px) {
+  .rw-enrollment-header { padding: 8px 16px; }
+  .rw-enrollment-content { padding: 24px 16px; }
+}
+
 html, body {
   height: 100%;
   margin: 0;
@@ -59,6 +82,7 @@ input, select, textarea {
   color: var(--text);
 }
 .btn:hover { background: var(--surface-3); }
+.rw-context-usage { width: 16px; height: 16px; flex: 0 0 16px; border-radius: 50%; margin: 0 6px; mask: radial-gradient(circle, transparent 5px, #000 5.5px); }
 .btn.primary { background: var(--accent); color: var(--accent-contrast, #fff); }
 .btn.primary:hover { background: var(--accent-strong, var(--accent)); }
 .btn.danger { background: var(--danger); color: #fff; }

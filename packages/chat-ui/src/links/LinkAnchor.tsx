@@ -32,7 +32,7 @@ export function LinkAnchor(props: {
   const fileLine = p.dataFileLine ? Number(p.dataFileLine) : undefined;
   const target = classifyLink(props.href, { fileAbs, fileLine });
   const display = target.kind === 'unsafe' ? 'text' : policy.display(target);
-  const icon = <LinkKindIcon kind={target.kind} />;
+  const icon = <LinkKindIcon kind={target.kind} href={target.href} fileAbs={target.fileAbs} />;
 
   if (display === 'text') return <>{props.children}</>;
   if (display === 'inert') return <InertLink target={target} icon={icon} note={t('links.unavailable')}>{props.children}</InertLink>;

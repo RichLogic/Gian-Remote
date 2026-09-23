@@ -102,8 +102,8 @@ importers:
   packages/remote-server:
     dependencies:
       '@gian/remote-protocol':
-        specifier: "https://github.com/RichLogic/Gian/releases/download/remote-protocol-v1.1.0/gian-remote-protocol-1.1.0.tgz"
-        version: "https://github.com/RichLogic/Gian/releases/download/remote-protocol-v1.1.0/gian-remote-protocol-1.1.0.tgz"
+        specifier: "https://github.com/RichLogic/Gian/releases/download/remote-protocol-v1.2.0/gian-remote-protocol-1.2.0.tgz"
+        version: "https://github.com/RichLogic/Gian/releases/download/remote-protocol-v1.2.0/gian-remote-protocol-1.2.0.tgz"
       '@hono/node-server':
         specifier: ^1.13.7
         version: 1.19.14(hono@4.12.34)
@@ -136,8 +136,8 @@ importers:
         specifier: workspace:*
         version: link:../chat-ui
       '@gian/remote-protocol':
-        specifier: "https://github.com/RichLogic/Gian/releases/download/remote-protocol-v1.1.0/gian-remote-protocol-1.1.0.tgz"
-        version: "https://github.com/RichLogic/Gian/releases/download/remote-protocol-v1.1.0/gian-remote-protocol-1.1.0.tgz"
+        specifier: "https://github.com/RichLogic/Gian/releases/download/remote-protocol-v1.2.0/gian-remote-protocol-1.2.0.tgz"
+        version: "https://github.com/RichLogic/Gian/releases/download/remote-protocol-v1.2.0/gian-remote-protocol-1.2.0.tgz"
       '@gian/shared':
         specifier: workspace:*
         version: link:../shared
@@ -183,11 +183,11 @@ importers:
 
 packages:
 
-  "@gian/remote-protocol@https://github.com/RichLogic/Gian/releases/download/remote-protocol-v1.1.0/gian-remote-protocol-1.1.0.tgz":
+  "@gian/remote-protocol@https://github.com/RichLogic/Gian/releases/download/remote-protocol-v1.2.0/gian-remote-protocol-1.2.0.tgz":
     resolution:
-      integrity: "sha512-6kFlFma5arQAvXcWwXnhKHjWC3UKDEqXSDHyqdjCdgfevqvFZ5PZH8WJ78tloJRKs1aHBGuXdJ7HKRM1Fg5p3A=="
-      tarball: "https://github.com/RichLogic/Gian/releases/download/remote-protocol-v1.1.0/gian-remote-protocol-1.1.0.tgz"
-    version: "1.1.0"
+      integrity: "sha512-4FIHXq5RwEc7JelP70Mn2gedgkf4xDt4NLTmzeyETQDktMVE1iBlRqGWrZpRbwbuS48LMXwE6koktZaQHsnV4g=="
+      tarball: "https://github.com/RichLogic/Gian/releases/download/remote-protocol-v1.2.0/gian-remote-protocol-1.2.0.tgz"
+    version: "1.2.0"
 
   '@adobe/css-tools@4.4.4':
     resolution: {integrity: sha512-Elp+iwUx5rN5+Y8xLt5/GRoG20WGoDCQ/1Fb+1LiGtvwbDavuSk0jhD/eZdckHAuzcDzccnkv+rEjyWfRx18gg==}
@@ -3916,7 +3916,7 @@ packages:
 
 snapshots:
 
-  "@gian/remote-protocol@https://github.com/RichLogic/Gian/releases/download/remote-protocol-v1.1.0/gian-remote-protocol-1.1.0.tgz":
+  "@gian/remote-protocol@https://github.com/RichLogic/Gian/releases/download/remote-protocol-v1.2.0/gian-remote-protocol-1.2.0.tgz":
     dependencies:
       "zod": "4.4.3"
 

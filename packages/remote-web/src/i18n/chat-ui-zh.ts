@@ -3,6 +3,7 @@
  * packages/web/src/i18n/zh.ts (parity is guarded by test/i18n.test.ts).
  */
 export const CHAT_UI_ZH: Record<string, string> = {
+  'translation.sentLabel': '经翻译后发给 LM 的文字如下',
   'coding.status.interrupted': '已中断',
   'common.cancel': '取消',
   'common.close': '关闭',

@@ -2,7 +2,7 @@
   "schema": 1,
   "product": "Gian Remote",
   "sourceRepository": "RichLogic/Gian-Dev",
-  "sourceCommit": "ed52a82452d0b36c209eb75ffdbd9ac4b34b9f69",
+  "sourceCommit": "3efc79a85627b9d5f9c35c669525e6d990294818",
   "workingTree": false,
   "sharedPackages": [
     "shared",
@@ -740,7 +740,7 @@
     {
       "source": "packages/remote-web/src/i18n/chat-ui-zh.ts",
       "path": "packages/remote-web/src/i18n/chat-ui-zh.ts",
-      "sha256": "2725e7058c8b17fa0be2e35a179a6ed6e192e9464ea09a51632fbddd91f59838"
+      "sha256": "d50490c68d8f616b306d0df60ad5ee4c415625267bce607d6eb2a619153e8e72"
     },
     {
       "source": "packages/remote-web/src/i18n/en.ts",
@@ -1932,7 +1932,7 @@
     {
       "path": "packages/remote-web/src/i18n/chat-ui-zh.ts",
       "mode": 420,
-      "sha256": "2725e7058c8b17fa0be2e35a179a6ed6e192e9464ea09a51632fbddd91f59838"
+      "sha256": "d50490c68d8f616b306d0df60ad5ee4c415625267bce607d6eb2a619153e8e72"
     },
     {
       "path": "packages/remote-web/src/i18n/en.ts",

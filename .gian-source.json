@@ -2,7 +2,7 @@
   "schema": 1,
   "product": "Gian Remote",
   "sourceRepository": "RichLogic/Gian-Dev",
-  "sourceCommit": "c4e034a0cf06b890ca4eb317f1874e79a9b4dc69",
+  "sourceCommit": "faaa628101ddbe8bdcea0be91190bcba24bec2ad",
   "workingTree": false,
   "sharedPackages": [
     "shared",
@@ -595,7 +595,7 @@
     {
       "source": "packages/remote-server/test/enrollment.test.ts",
       "path": "packages/remote-server/test/enrollment.test.ts",
-      "sha256": "33137f4e361410c73cdf61b6f61d19b5dc6d1927d775cde44100fd8073a42f9a"
+      "sha256": "3a8e78ec9cd53f8e5c2be056a90e71fd0de801fbef387563c795303481591688"
     },
     {
       "source": "packages/remote-server/test/fixture.ts",
@@ -1787,7 +1787,7 @@
     {
       "path": "packages/remote-server/test/enrollment.test.ts",
       "mode": 420,
-      "sha256": "33137f4e361410c73cdf61b6f61d19b5dc6d1927d775cde44100fd8073a42f9a"
+      "sha256": "3a8e78ec9cd53f8e5c2be056a90e71fd0de801fbef387563c795303481591688"
     },
     {
       "path": "packages/remote-server/test/fixture.ts",

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 import { ACCOUNT_PROTOCOL, AUTH_PROTOCOL, ENROLLMENT_TTL_MS, exportPublicJwk, generateP256SigningKeyPair,
-  accountLoginStartedSchema, generateCanonicalId, remoteAccountChallengePayload, signBytes } from '@gian/remote-protocol';
+  accountLoginStartedSchema, generateCanonicalId, hostEnrollmentClaimResultSchema, remoteAccountChallengePayload, signBytes } from '@gian/remote-protocol';
 
 import { cookieHeader, enrollHost, makeRemoteTestApp, pairDevice, authorizeAccount } from './fixture.js';
 import { createEnrollmentFromEnv } from '../src/enrollment-command.js';
@@ -393,6 +393,8 @@ test('/health has no host or device identifiers and enrollment returns app ident
   })).json() as { server_identity?: { fingerprint?: string; algorithm?: string } };
   assert.equal(claimed.server_identity?.algorithm, 'P-256');
   assert.equal(typeof claimed.server_identity?.fingerprint, 'string');
-  assert.doesNotMatch(JSON.stringify(claimed), /tls|certificate|leaf/i);
+  assert.deepEqual(Object.keys(claimed).sort(), ['connector_refresh_secret', 'host_id', 'protocol', 'server_identity']);
+  assert.deepEqual(Object.keys(claimed.server_identity ?? {}).sort(), ['algorithm', 'fingerprint', 'public_key']);
+  hostEnrollmentClaimResultSchema.parse(claimed);
   handle.shutdown();
 });

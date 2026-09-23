@@ -336,10 +336,11 @@ export class RemoteRepositories {
     this.db.prepare('UPDATE device_host_pairings SET confirmed_at = ? WHERE id = ? AND confirmed_at IS NULL').run(this.now(), id);
   }
 
-  revokeExpiredBrowserPairings(hostId: string): void {
-    const expired = this.db.prepare(`SELECT p.id FROM device_host_pairings p JOIN account_peers a
+  revokeExpiredOrUnboundPairings(hostId: string): void {
+    const expired = this.db.prepare(`SELECT p.id FROM device_host_pairings p LEFT JOIN account_peers a
       ON a.role = 'controller' AND a.installation_id = p.account_peer_id
-      WHERE p.host_id = ? AND p.revoked_at IS NULL AND a.delegated_host_id = p.host_id AND a.expires_at <= ?`)
+      WHERE p.host_id = ? AND p.revoked_at IS NULL
+        AND (p.account_peer_id IS NULL OR (a.delegated_host_id = p.host_id AND a.expires_at <= ?))`)
       .all(hostId, this.now()) as Array<{ id: string }>;
     for (const pairing of expired) this.revokePairing(pairing.id);
   }

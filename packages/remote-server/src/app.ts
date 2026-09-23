@@ -437,7 +437,7 @@ export async function createRemoteApp(config: RemoteServerConfig): Promise<Remot
     const accountToken = context.req.header('x-gian-account-token');
     const authenticated = accountToken !== undefined ? accounts.requireToken(accountToken, 'controller') : undefined;
     if (authenticated) accounts.requireSameAccount(owner.installation_id, authenticated.installation_id);
-    repos.revokeExpiredBrowserPairings(grant.host_id);
+    repos.revokeExpiredOrUnboundPairings(grant.host_id);
     if (repos.countHostPairings(grant.host_id) >= config.maxDevicesPerHost) {
       return context.json(jsonError('RATE_LIMITED'), 429);
     }

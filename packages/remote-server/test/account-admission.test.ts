@@ -143,6 +143,31 @@ test('Host rejection and revocation close browser delegation without GitHub', as
   } finally { f.handle.shutdown(); }
 });
 
+test('legacy unbound browser can pair again only with a fresh invitation and Host confirmation', async () => {
+  const f = await makeRemoteTestApp();
+  try {
+    const host = await enrollHost(f.fetch);
+    const old = await pairDevice(f.fetch, host.accessToken, host.hostId);
+    f.handle.services.db.prepare('UPDATE device_host_pairings SET account_peer_id = NULL WHERE id = ?').run(old.deviceId);
+    assert.throws(() => f.handle.services.accounts.requirePairing(old.deviceId));
+    f.handle.services.config.maxDevicesPerHost = 1;
+    const grant = await (await f.fetch('/api/v1/host/pairings', json({ protocol: AUTH_PROTOCOL }, host.accessToken))).json() as { code: string };
+    const keys = await generateP256SigningKeyPair();
+    const claim = await f.fetch('/api/v1/pairings/claim', json({ protocol: AUTH_PROTOCOL,
+      browser_installation_id: old.browserId, device_public_key: await exportPublicJwk(keys.publicKey),
+      code: grant.code, platform: 'phone', user_agent: 'browser' }));
+    assert.equal(claim.status, 200);
+    const pairing = await claim.json() as { pairing_id: string };
+    assert.notEqual(pairing.pairing_id, old.deviceId);
+    const deviceInput = { protocol: AUTH_PROTOCOL, browser_installation_id: old.browserId, host_id: host.hostId };
+    assert.equal((await f.fetch('/api/v1/sessions/device-challenge', json(deviceInput))).status, 401);
+    assert.equal((await f.fetch('/api/v1/pairings/' + pairing.pairing_id + '/confirm', json({ protocol: AUTH_PROTOCOL,
+      pairing_id: pairing.pairing_id, decision: 'confirm' }, host.accessToken))).status, 200);
+    assert.equal((await f.fetch('/api/v1/sessions/device-challenge', json(deviceInput))).status, 200);
+    assert.equal((await f.fetch('/api/v1/ws-tickets', json({ protocol: AUTH_PROTOCOL, host_id: host.hostId }, old.accessToken))).status, 401);
+  } finally { f.handle.shutdown(); }
+});
+
 test('logout invalidates authenticated device routes and Host logout blocks new tickets', async () => {
   const f = await makeRemoteTestApp();
   try {

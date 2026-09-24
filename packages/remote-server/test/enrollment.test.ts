@@ -398,3 +398,17 @@ test('/health has no host or device identifiers and enrollment returns app ident
   hostEnrollmentClaimResultSchema.parse(claimed);
   handle.shutdown();
 });
+
+test('a GitHub upstream failure answers 503 UPSTREAM_FAILED, never a misleading 401', async () => {
+  const f = await makeRemoteTestApp({ config: { githubFetch: async () => new Response('rate limited', { status: 403 }) } });
+  try {
+    const keys = await generateP256SigningKeyPair();
+    const peer = { role: 'controller', installation_id: generateCanonicalId(), public_key: await exportPublicJwk(keys.publicKey) };
+    const enrollment = await f.fetch('/api/v1/enrollment/account/start', post({ protocol: ACCOUNT_PROTOCOL, peer }));
+    assert.equal(enrollment.status, 503);
+    assert.equal((await enrollment.json()).error.code, 'UPSTREAM_FAILED');
+    const general = await f.fetch('/api/v1/account/start', post({ protocol: ACCOUNT_PROTOCOL, peer: { ...peer, role: 'host' } }));
+    assert.equal(general.status, 503);
+    assert.equal((await general.json()).error.code, 'UPSTREAM_FAILED');
+  } finally { f.handle.shutdown(); }
+});

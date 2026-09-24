@@ -47,7 +47,7 @@ import { SlidingWindowLimiter } from './auth/rate-limit.js';
 import { clearRefreshCookie, readRefreshCookie, writeRefreshCookie } from './auth/cookies.js';
 import { TokenStore } from './auth/tokens.js';
 import { RemoteAccountPeers } from './auth/account-peers.js';
-import { RemoteAccountLogin } from './auth/account-login.js';
+import { GitHubUpstreamError, RemoteAccountLogin } from './auth/account-login.js';
 import { GitHubIdentityVerifier } from './auth/github-identity.js';
 import { loadOrCreateServerIdentity, type ServerIdentity } from './auth/identity.js';
 import { selfRevokePayload, verifyP256Signature } from './auth/signatures.js';
@@ -1024,6 +1024,9 @@ export async function createRemoteApp(config: RemoteServerConfig): Promise<Remot
 
   app.onError((error, context) => {
     logError(config.logger, error);
+    if (error instanceof GitHubUpstreamError) {
+      return context.json({ error: { code: 'UPSTREAM_FAILED' } }, 503);
+    }
     if (error instanceof RemoteProtocolError) {
       return context.json(jsonError(error.code), error.code === 'AUTH_REQUIRED' ? 401 : 400);
     }

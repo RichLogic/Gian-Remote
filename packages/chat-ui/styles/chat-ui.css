@@ -1124,7 +1124,10 @@ textarea.approval-text-field { min-height: 48px; resize: vertical; }
   display: inline-flex;
   align-items: center;
   gap: 2px;
-  max-width: min(320px, 85%);
+  /* Cap by px only: a % cap against the shrink-to-fit bubble resolves AFTER
+   * the bubble sized itself to the chip, so a lone chip (image-only message)
+   * always lost 15% of its label to the ellipsis. */
+  max-width: min(320px, 100%);
   margin: 0 2px;
   padding: 0 6px;
   overflow: hidden;

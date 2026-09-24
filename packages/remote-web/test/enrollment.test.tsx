@@ -102,4 +102,16 @@ describe('separate enrollment page', () => {
     await screen.findByText('Copied');
     expect(writeText).toHaveBeenCalledWith('WXYZ-1234');
   });
+
+  it('a 503 from the Server reports a temporarily unavailable GitHub, not a generic failure', async () => {
+    vi.stubGlobal('crypto', webcrypto);
+    vi.stubGlobal('fetch', vi.fn(async (path: string) => {
+      if (path.endsWith('/account')) return new Response('{}', { status: 401 });
+      return new Response('{"error":{"code":"UPSTREAM_FAILED"}}', { status: 503 });
+    }));
+    show();
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Sign in with GitHub' })).toBeEnabled());
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in with GitHub' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('temporarily unavailable');
+  });
 });

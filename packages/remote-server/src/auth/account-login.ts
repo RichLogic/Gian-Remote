@@ -23,6 +23,13 @@ interface Login {
   cancelled?: boolean;
 }
 
+/** The GitHub upstream call itself failed (HTTP error, timeout, malformed or
+ *  rate-limited response). This is NOT an authorization failure — callers map
+ *  it to a retryable 503 instead of a misleading 401. */
+export class GitHubUpstreamError extends Error {
+  constructor() { super('GitHub authorization is temporarily unavailable'); }
+}
+
 /** GitHub tokens exist only during this Server-owned exchange. Clients see
  * a GitHub user code and an opaque Gian account session, never OAuth tokens. */
 export class RemoteAccountLogin {
@@ -48,7 +55,7 @@ export class RemoteAccountLogin {
         || typeof body.user_code !== 'string' || !body.user_code || body.user_code.length > 64
         || body.verification_uri !== 'https://github.com/login/device'
         || typeof body.expires_in !== 'number' || !Number.isFinite(body.expires_in) || body.expires_in <= 0
-        || typeof body.interval !== 'number' || !Number.isFinite(body.interval) || body.interval <= 0) throw denied();
+        || typeof body.interval !== 'number' || !Number.isFinite(body.interval) || body.interval <= 0) throw new GitHubUpstreamError();
       const challenge = this.accounts.challenge(peer);
       const expiresAt = Math.min(challenge.expires_at, this.now() + body.expires_in * 1000);
       const interval = Math.min(60, Math.max(5, Math.ceil(body.interval)));
@@ -123,7 +130,7 @@ export class RemoteAccountLogin {
       return result;
     }
     if (typeof body.access_token !== 'string' || !body.access_token
-      || body.token_type?.toString().toLowerCase() !== 'bearer') throw denied();
+      || body.token_type?.toString().toLowerCase() !== 'bearer') throw new GitHubUpstreamError();
     const authenticated = await this.accounts.authenticate({
       challengeId: login.challenge.challenge_id, nonce: login.challenge.nonce,
       signature, accessToken: body.access_token,
@@ -158,11 +165,14 @@ export class RemoteAccountLogin {
         headers: { accept: 'application/json', 'content-type': 'application/x-www-form-urlencoded', 'user-agent': 'Gian-Remote' },
         body: new URLSearchParams(params),
       });
-      if (!response.ok) throw denied();
+      if (!response.ok) throw new GitHubUpstreamError();
       const value: unknown = await response.json();
-      if (!value || typeof value !== 'object' || Array.isArray(value)) throw denied();
+      if (!value || typeof value !== 'object' || Array.isArray(value)) throw new GitHubUpstreamError();
       return value as Record<string, unknown>;
-    } catch { throw denied(); }
+    } catch (error) {
+      if (error instanceof GitHubUpstreamError) throw error;
+      throw new GitHubUpstreamError();
+    }
   }
 }
 

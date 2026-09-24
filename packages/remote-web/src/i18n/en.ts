@@ -30,6 +30,7 @@ export const EN: Messages = {
   'enrollment.denied': 'This GitHub account is not allowed to register Hosts, or registration is disabled.',
   'enrollment.signedOut': 'Your registration session expired. Sign in again.',
   'enrollment.failed': 'The request failed. Try again.',
+  'enrollment.githubUnavailable': 'GitHub authorization is temporarily unavailable — try again in a moment.',
   'enrollment.copyFailed': 'Could not copy to the clipboard.',
   'account.title': 'GitHub account',
   'account.signIn': 'Sign in with GitHub',

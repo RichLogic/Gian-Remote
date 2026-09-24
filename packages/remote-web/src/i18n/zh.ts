@@ -25,6 +25,7 @@ export const ZH: Messages = {
   'enrollment.denied': '此 GitHub 账号不在注册白名单中，或服务器未开放注册。',
   'enrollment.signedOut': '注册登录已过期，请重新登录。',
   'enrollment.failed': '请求失败，请重试。',
+  'enrollment.githubUnavailable': 'GitHub 授权暂时不可用，请稍候重试。',
   'enrollment.copyFailed': '无法复制到剪贴板。',
   'account.title': 'GitHub 账号',
   'account.signIn': '使用 GitHub 登录',

@@ -17,7 +17,10 @@ async function request(path: string, body?: unknown): Promise<Record<string, unk
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     signal: AbortSignal.timeout(15_000),
   });
-  if (!response.ok) throw new Error(response.status === 403 ? 'denied' : response.status === 401 ? 'signedOut' : 'failed');
+  if (!response.ok) throw new Error(response.status === 403 ? 'denied'
+    : response.status === 401 ? 'signedOut'
+    : response.status === 503 ? 'githubUnavailable'
+    : 'failed');
   return response.json() as Promise<Record<string, unknown>>;
 }
 
@@ -101,7 +104,7 @@ export function EnrollmentPage() {
       }));
       const signature = await signBytes(pair.privateKey, new TextEncoder().encode(remoteAccountChallengePayload(started.challenge)));
       if (current === generation.current) setPending({ started, signature });
-    } catch (reason) { if (current === generation.current) setError(reason instanceof Error && reason.message === 'denied' ? 'denied' : 'failed'); }
+    } catch (reason) { if (current === generation.current) setError(reason instanceof Error && ['denied', 'githubUnavailable'].includes(reason.message) ? reason.message : 'failed'); }
     finally { if (current === generation.current) setBusy(false); }
   }
   async function generate() {

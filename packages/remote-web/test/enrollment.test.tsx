@@ -72,4 +72,34 @@ describe('separate enrollment page', () => {
     expect(proof).not.toHaveProperty('access_token');
     expect(screen.queryByRole('button', { name: 'Generate enrollment token' })).toBeNull();
   }, 10_000);
+
+  it('opens the GitHub device page in a new tab and offers to copy the user code', async () => {
+    vi.stubGlobal('crypto', webcrypto);
+    const open = vi.fn();
+    vi.stubGlobal('open', open);
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
+    vi.stubGlobal('fetch', vi.fn(async (path: string, init?: RequestInit) => {
+      const body = init?.body ? JSON.parse(String(init.body)) as Record<string, unknown> : {};
+      if (path.endsWith('/account')) return new Response('{}', { status: 401 });
+      if (path.endsWith('/start')) return Response.json({ protocol: ACCOUNT_PROTOCOL,
+        login_id: generateCanonicalId(), user_code: 'WXYZ-1234', verification_uri: 'https://github.com/login/device',
+        interval_seconds: 5, expires_at: Date.now() + 300_000,
+        challenge: { type: 'gian.remote.account_challenge/1', challenge_id: generateCanonicalId(), nonce: 'test-nonce',
+          server_identity_fingerprint: 'a'.repeat(64), peer: body.peer, expires_at: Date.now() + 300_000 } });
+      return Response.json({ protocol: ACCOUNT_PROTOCOL, status: 'pending', interval_seconds: 5 });
+    }));
+    show();
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Sign in with GitHub' })).toBeEnabled());
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in with GitHub' }));
+
+    await screen.findByText('WXYZ-1234');
+    // The authorization page opens by itself; the button stays as fallback.
+    await waitFor(() => expect(open).toHaveBeenCalledWith('https://github.com/login/device', '_blank', 'noopener,noreferrer'));
+    expect(screen.getByRole('link', { name: 'Authorize on GitHub' })).toHaveAttribute('href', 'https://github.com/login/device');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Copy code' }));
+    await screen.findByText('Copied');
+    expect(writeText).toHaveBeenCalledWith('WXYZ-1234');
+  });
 });

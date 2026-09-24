@@ -21,6 +21,12 @@ async function request(path: string, body?: unknown): Promise<Record<string, unk
   return response.json() as Promise<Record<string, unknown>>;
 }
 
+function systemDark(): boolean {
+  return typeof window !== 'undefined'
+    && typeof window.matchMedia === 'function'
+    && window.matchMedia('(prefers-color-scheme: dark)').matches;
+}
+
 export function EnrollmentPage() {
   const t = useT();
   const [account, setAccount] = useState<Account | null>(null);
@@ -31,19 +37,35 @@ export function EnrollmentPage() {
   const [now, setNow] = useState(Date.now());
   const [copied, setCopied] = useState('');
   const generation = useRef(0);
+  const openedForLogin = useRef<string | null>(null);
+
   useEffect(() => {
-    document.body.dataset.theme = 'light';
-    document.body.dataset.accent = 'azure';
+    // Follow the OS theme like the rest of Remote Web — never a hard-coded light page.
+    const apply = () => {
+      document.body.dataset.theme = systemDark() ? 'dark' : 'light';
+      document.body.dataset.accent = 'azure';
+    };
+    apply();
+    const query = typeof window.matchMedia === 'function' ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+    query?.addEventListener('change', apply);
     const current = ++generation.current;
     void request('/account').then(result => {
       if (current === generation.current) setAccount(result.account as Account);
     }).catch(reason => {
       if (current === generation.current && reason instanceof Error && reason.message !== 'signedOut') setError(reason.message);
     }).finally(() => { if (current === generation.current) setBusy(false); });
-    return () => { ++generation.current; };
+    return () => { ++generation.current; query?.removeEventListener('change', apply); };
   }, []);
+
   useEffect(() => {
     if (!pending) return;
+    // The whole point of the device login: take the user to GitHub without
+    // making them hunt for the link. The visible button below stays as the
+    // popup-blocked fallback.
+    if (openedForLogin.current !== pending.started.login_id) {
+      openedForLogin.current = pending.started.login_id;
+      try { window.open(pending.started.verification_uri, '_blank', 'noopener,noreferrer'); } catch { /* fallback stays visible */ }
+    }
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout>;
     const poll = async () => {
@@ -61,6 +83,7 @@ export function EnrollmentPage() {
     timer = setTimeout(() => void poll(), pending.started.interval_seconds * 1000);
     return () => { cancelled = true; clearTimeout(timer); };
   }, [pending]);
+
   useEffect(() => {
     if (!token) return;
     const timer = setInterval(() => setNow(Date.now()), 1000);
@@ -111,48 +134,95 @@ export function EnrollmentPage() {
     try { await navigator.clipboard.writeText(value); setCopied(name); }
     catch { setError('copyFailed'); }
   }
+
   const seconds = token ? Math.max(0, Math.ceil((token.expires_at - now) / 1000)) : 0;
-  return <main className="rw-enrollment">
-    <header className="rw-enrollment-header">
-      <a href="/" className="rw-enrollment-back"><Icon name="back" />{t('enrollment.remote')}</a>
-      <span className="rw-pair-brand">Gian Remote</span>
+  const ttl = token ? Math.max(1, Math.round((seconds / 300) * 100)) : 0;
+
+  return <main className="rw-enroll">
+    <header className="rw-enroll-top">
+      <a href="/" className="rw-enroll-back"><Icon name="back" size={14} />{t('enrollment.remote')}</a>
     </header>
-    <section className="rw-enrollment-content">
-      <h1>{t('enrollment.title')}</h1>
-      <div className="rw-enrollment-row">
-        <label htmlFor="enrollment-server">{t('enrollment.server')}</label>
-        <input id="enrollment-server" className="rw-input" value={window.location.origin} readOnly />
-        <button type="button" className="btn sm secondary" onClick={() => void copy(window.location.origin, 'server')}>
+    <section className="rw-enroll-card">
+      <span className="rw-enroll-brand">Gian Remote</span>
+      <h1 className="rw-enroll-title">{t('enrollment.title')}</h1>
+      <p className="rw-enroll-sub">{t('enrollment.subtitle')}</p>
+
+      <div className="rw-enroll-server">
+        <span className="rw-enroll-server-url" title={window.location.origin}>{window.location.origin}</span>
+        <button type="button" className="btn xs secondary" onClick={() => void copy(window.location.origin, 'server')}>
           {copied === 'server' ? t('enrollment.copied') : t('enrollment.copy')}
         </button>
       </div>
-      {account ? <>
-        <div className="rw-enrollment-account">
-          <span>GitHub <strong>@{account.login}</strong></span>
-          <button type="button" className="btn sm ghost" disabled={busy} onClick={() => void signOut()}>{t('enrollment.signOut')}</button>
-        </div>
-        <button type="button" className="btn primary" disabled={busy} onClick={() => void generate()}>
-          <Icon name="plus" />{t(token ? 'enrollment.generateAgain' : 'enrollment.generate')}
+
+      {busy && !pending && <span role="status" className="spinner" aria-label={t('enrollment.pending')} />}
+      {error && <p role="alert" className="rw-enroll-error">{t(`enrollment.${error}`)}</p>}
+
+      {!busy && !account && !pending && (
+        <button type="button" className="btn primary rw-enroll-cta" onClick={() => void signIn()}>
+          {t('account.signIn')}
         </button>
-        {token && <div className="rw-enrollment-token">
-          <label htmlFor="enrollment-token">Enrollment token</label>
-          <textarea id="enrollment-token" className="rw-input" readOnly rows={2}
-            value={seconds > 0 ? token.enrollment_token : ''} aria-label="Enrollment token" />
-          <div className="rw-enrollment-account">
-            <span role="status">{seconds > 0 ? `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')} · ${t('enrollment.singleUse')}` : t('enrollment.expired')}</span>
-            <button type="button" className="btn sm secondary" disabled={seconds === 0}
+      )}
+
+      {pending && (
+        <div className="rw-enroll-login">
+          <p className="rw-enroll-note">{t('enrollment.githubOpened')}</p>
+          <div className="rw-enroll-code-row">
+            <code className="rw-enroll-code">{pending.started.user_code}</code>
+            <button type="button" className="btn xs secondary" onClick={() => void copy(pending.started.user_code, 'code')}>
+              {copied === 'code' ? t('enrollment.copied') : t('enrollment.copyCode')}
+            </button>
+          </div>
+          <a className="btn secondary rw-enroll-cta" href={pending.started.verification_uri} target="_blank" rel="noopener noreferrer">
+            {t('account.authorize')}
+          </a>
+          <div className="rw-enroll-waiting">
+            <span className="spinner" aria-hidden="true" />
+            <span role="status">{t('enrollment.waitingAuth')}</span>
+          </div>
+          <button type="button" className="btn sm ghost" onClick={() => void cancelLogin()}>{t('common.cancel')}</button>
+        </div>
+      )}
+
+      {account && (
+        <div className="rw-enroll-account">
+          <span className="rw-enroll-account-name">GitHub <strong>@{account.login}</strong></span>
+          <button type="button" className="btn xs ghost" disabled={busy} onClick={() => void signOut()}>{t('enrollment.signOut')}</button>
+        </div>
+      )}
+
+      {account && !token && (
+        <button type="button" className="btn primary rw-enroll-cta" disabled={busy} onClick={() => void generate()}>
+          <Icon name="plus" size={13} />{t('enrollment.generate')}
+        </button>
+      )}
+
+      {account && token && (
+        <div className="rw-enroll-token">
+          <label className="rw-enroll-token-label" htmlFor="enrollment-token">Enrollment token</label>
+          <div className="rw-enroll-token-row">
+            <textarea id="enrollment-token" className="rw-enroll-token-value" readOnly rows={2}
+              value={seconds > 0 ? token.enrollment_token : ''} aria-label="Enrollment token" />
+            <button type="button" className="btn xs secondary" disabled={seconds === 0}
               onClick={() => void copy(token.enrollment_token, 'token')}>
               {copied === 'token' ? t('enrollment.copied') : t('enrollment.copy')}
             </button>
           </div>
-        </div>}
-      </> : pending ? <div className="rw-enrollment-login">
-        <code>{pending.started.user_code}</code>
-        <a href={pending.started.verification_uri} target="_blank" rel="noopener noreferrer">{t('account.authorize')}</a>
-        <button type="button" className="btn sm ghost" onClick={() => void cancelLogin()}>{t('common.cancel')}</button>
-      </div> : <button type="button" className="btn primary" disabled={busy} onClick={() => void signIn()}>{t('account.signIn')}</button>}
-      {busy && <span role="status" className="spinner" aria-label={t('enrollment.pending')} />}
-      {error && <p role="alert">{t(`enrollment.${error}`)}</p>}
+          <div className="rw-enroll-ttl">
+            <div className="rw-enroll-ttl-bar" aria-hidden="true">
+              <div className="rw-enroll-ttl-fill" style={{ width: `${ttl}%` }} />
+            </div>
+            <span role="status" className="rw-enroll-ttl-text">
+              {seconds > 0
+                ? `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')} · ${t('enrollment.singleUse')}`
+                : t('enrollment.expired')}
+            </span>
+          </div>
+          <p className="rw-enroll-note">{t('enrollment.tokenHint')}</p>
+          <button type="button" className="btn secondary rw-enroll-cta" disabled={busy} onClick={() => void generate()}>
+            <Icon name="plus" size={13} />{t('enrollment.generateAgain')}
+          </button>
+        </div>
+      )}
     </section>
   </main>;
 }

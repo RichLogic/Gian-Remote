@@ -2,7 +2,7 @@
   "schema": 1,
   "product": "Gian Remote",
   "sourceRepository": "RichLogic/Gian-Dev",
-  "sourceCommit": "69a1cca93707873fd99337580049ce1f21aa745b",
+  "sourceCommit": "9936526c30bad3ff63f88407b2dcd4cd0ceae84e",
   "workingTree": false,
   "sharedPackages": [
     "shared",
@@ -65,7 +65,7 @@
     {
       "source": "delivery/remote/CHANGELOG.md",
       "path": "CHANGELOG.md",
-      "sha256": "1ac0712d7621e2de2e9ca0c45c7448f09f561edb975b63c9a0d38e4864f9cd86"
+      "sha256": "d329666b84164d26aaae40d92c1b98dea59436351bd1bda5fcc2f04f80f08ec1"
     },
     {
       "source": "delivery/remote/Dockerfile",
@@ -90,7 +90,7 @@
     {
       "source": "delivery/remote/release.json",
       "path": "release.json",
-      "sha256": "34e7efe8999338199885fe8a3a8519b2cc8a106195d1db43a66b3e86568af649"
+      "sha256": "419403aa24193d2276f6c3e4ce0be00bf3f37b598bd37cdeb5a3a98dacabcd82"
     },
     {
       "source": "delivery/remote/runtime.env.example",
@@ -785,7 +785,7 @@
     {
       "source": "packages/remote-web/src/styles/remote-web.css",
       "path": "packages/remote-web/src/styles/remote-web.css",
-      "sha256": "63578e156c5f29d5e3eee5b9904a1d23ea02e2e949a9fbde5cbf086a0e0bd09e"
+      "sha256": "d93d2c2af66adb67092424a6c67d7a2e163f43aff798b37a49d7ef2b53e84240"
     },
     {
       "source": "packages/remote-web/src/styles/tokens.css",
@@ -925,7 +925,7 @@
     {
       "source": "packages/remote-web/test/a11y.test.tsx",
       "path": "packages/remote-web/test/a11y.test.tsx",
-      "sha256": "5b98ff4cca85d7a10de3745ce08f953df92efa1f82b0d9d3e2af5ea54f6d6566"
+      "sha256": "aa32e40e5aba2b94859db06581b8f427e829207533ce749dca318df1fdcceea8"
     },
     {
       "source": "packages/remote-web/test/app-shell.test.tsx",
@@ -1337,7 +1337,7 @@
     {
       "path": "CHANGELOG.md",
       "mode": 420,
-      "sha256": "1ac0712d7621e2de2e9ca0c45c7448f09f561edb975b63c9a0d38e4864f9cd86"
+      "sha256": "d329666b84164d26aaae40d92c1b98dea59436351bd1bda5fcc2f04f80f08ec1"
     },
     {
       "path": "compose.yaml",
@@ -1357,7 +1357,7 @@
     {
       "path": "package.json",
       "mode": 420,
-      "sha256": "c1ca562019c448ac6c776ad8abf06224c5df8e0ff5941df5ab9192280b167d10"
+      "sha256": "0e615d09b029a7fea2bfd2807d83261935d2426e462056954457aba917299711"
     },
     {
       "path": "packages/chat-ui/package.json",
@@ -1977,7 +1977,7 @@
     {
       "path": "packages/remote-web/src/styles/remote-web.css",
       "mode": 420,
-      "sha256": "63578e156c5f29d5e3eee5b9904a1d23ea02e2e949a9fbde5cbf086a0e0bd09e"
+      "sha256": "d93d2c2af66adb67092424a6c67d7a2e163f43aff798b37a49d7ef2b53e84240"
     },
     {
       "path": "packages/remote-web/src/styles/tokens.css",
@@ -2117,7 +2117,7 @@
     {
       "path": "packages/remote-web/test/a11y.test.tsx",
       "mode": 420,
-      "sha256": "5b98ff4cca85d7a10de3745ce08f953df92efa1f82b0d9d3e2af5ea54f6d6566"
+      "sha256": "aa32e40e5aba2b94859db06581b8f427e829207533ce749dca318df1fdcceea8"
     },
     {
       "path": "packages/remote-web/test/app-shell.test.tsx",
@@ -2492,7 +2492,7 @@
     {
       "path": "release.json",
       "mode": 420,
-      "sha256": "34e7efe8999338199885fe8a3a8519b2cc8a106195d1db43a66b3e86568af649"
+      "sha256": "419403aa24193d2276f6c3e4ce0be00bf3f37b598bd37cdeb5a3a98dacabcd82"
     },
     {
       "path": "runtime.env.example",

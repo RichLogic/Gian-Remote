@@ -1,5 +1,10 @@
 # Gian Remote Changelog
 
+## [1.2.4] - 2026-09-25
+
+- Reduces the mobile context-usage ring to a compact 20px indicator while
+  keeping it beside the model control and preserving button touch targets.
+
 ## [1.2.3] - 2026-09-25
 
 - Makes the five mobile composer controls visually consistent while retaining

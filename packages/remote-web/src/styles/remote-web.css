@@ -1474,11 +1474,11 @@ input, select, textarea {
 .rw-app[data-mode="narrow"] .composer-bar .composer-act.primary::before { background: var(--accent); }
 .rw-app[data-mode="narrow"] .composer-bar .composer-act.primary.danger::before { background: var(--danger); }
 .rw-app[data-mode="narrow"] .rw-context-usage {
-  width: 30px;
-  height: 30px;
-  flex: 0 0 30px;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
   margin: 0;
-  mask: radial-gradient(circle, transparent 11.5px, #000 12px);
+  mask: radial-gradient(circle, transparent 7px, #000 7.5px);
 }
 .rw-app[data-mode="narrow"] .rw-host-btn { min-height: 36px; }
 .rw-app[data-mode="narrow"] .btn.xs { min-height: 32px; }

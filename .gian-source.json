@@ -2,7 +2,7 @@
   "schema": 1,
   "product": "Gian Remote",
   "sourceRepository": "RichLogic/Gian-Dev",
-  "sourceCommit": "c22e8cd71cff537a7bdea5f79d38e37c0b68ce96",
+  "sourceCommit": "69a1cca93707873fd99337580049ce1f21aa745b",
   "workingTree": false,
   "sharedPackages": [
     "shared",
@@ -65,7 +65,7 @@
     {
       "source": "delivery/remote/CHANGELOG.md",
       "path": "CHANGELOG.md",
-      "sha256": "83384aeb1ed90e3dc5de4d1fdbf51021ce6d5c4dffc326db8a0b48544e317415"
+      "sha256": "1ac0712d7621e2de2e9ca0c45c7448f09f561edb975b63c9a0d38e4864f9cd86"
     },
     {
       "source": "delivery/remote/Dockerfile",
@@ -90,7 +90,7 @@
     {
       "source": "delivery/remote/release.json",
       "path": "release.json",
-      "sha256": "b005a94261673521fe473ee3371ff97bf8c7727bf6715c3f276a0ae353ed3cb8"
+      "sha256": "34e7efe8999338199885fe8a3a8519b2cc8a106195d1db43a66b3e86568af649"
     },
     {
       "source": "delivery/remote/runtime.env.example",
@@ -785,7 +785,7 @@
     {
       "source": "packages/remote-web/src/styles/remote-web.css",
       "path": "packages/remote-web/src/styles/remote-web.css",
-      "sha256": "b220695ffb0d1a32de3c5b5e500a01d04e779a424ee4db2ad4b6de74e68f834e"
+      "sha256": "63578e156c5f29d5e3eee5b9904a1d23ea02e2e949a9fbde5cbf086a0e0bd09e"
     },
     {
       "source": "packages/remote-web/src/styles/tokens.css",
@@ -850,7 +850,7 @@
     {
       "source": "packages/remote-web/src/ui/composer.tsx",
       "path": "packages/remote-web/src/ui/composer.tsx",
-      "sha256": "740c43d04f663e1036dcf44a2ac31119140d4451cc65f33b7a340da8ba3b4747"
+      "sha256": "18cbcd64ebbdca453aec5e572a66638819c67650617ac3046a57b5ed023d81dc"
     },
     {
       "source": "packages/remote-web/src/ui/controller-context.tsx",
@@ -940,7 +940,7 @@
     {
       "source": "packages/remote-web/test/chat-composer.test.tsx",
       "path": "packages/remote-web/test/chat-composer.test.tsx",
-      "sha256": "f97be2545a623bcfcbcafd823b27f914d178fd7afcfefabab335e2228d6095ad"
+      "sha256": "6b40efa0a43066bd028c5e9b3cf07a54f1f70efee946f5508b1eaf12116d12b3"
     },
     {
       "source": "packages/remote-web/test/ciphertext-pacer.test.ts",
@@ -1337,7 +1337,7 @@
     {
       "path": "CHANGELOG.md",
       "mode": 420,
-      "sha256": "83384aeb1ed90e3dc5de4d1fdbf51021ce6d5c4dffc326db8a0b48544e317415"
+      "sha256": "1ac0712d7621e2de2e9ca0c45c7448f09f561edb975b63c9a0d38e4864f9cd86"
     },
     {
       "path": "compose.yaml",
@@ -1357,7 +1357,7 @@
     {
       "path": "package.json",
       "mode": 420,
-      "sha256": "bd7b1a6f2cdc9eeb14dd7f6cd996ab24e7c2b4beea5bad3f443623fb95dcedd9"
+      "sha256": "c1ca562019c448ac6c776ad8abf06224c5df8e0ff5941df5ab9192280b167d10"
     },
     {
       "path": "packages/chat-ui/package.json",
@@ -1977,7 +1977,7 @@
     {
       "path": "packages/remote-web/src/styles/remote-web.css",
       "mode": 420,
-      "sha256": "b220695ffb0d1a32de3c5b5e500a01d04e779a424ee4db2ad4b6de74e68f834e"
+      "sha256": "63578e156c5f29d5e3eee5b9904a1d23ea02e2e949a9fbde5cbf086a0e0bd09e"
     },
     {
       "path": "packages/remote-web/src/styles/tokens.css",
@@ -2042,7 +2042,7 @@
     {
       "path": "packages/remote-web/src/ui/composer.tsx",
       "mode": 420,
-      "sha256": "740c43d04f663e1036dcf44a2ac31119140d4451cc65f33b7a340da8ba3b4747"
+      "sha256": "18cbcd64ebbdca453aec5e572a66638819c67650617ac3046a57b5ed023d81dc"
     },
     {
       "path": "packages/remote-web/src/ui/controller-context.tsx",
@@ -2132,7 +2132,7 @@
     {
       "path": "packages/remote-web/test/chat-composer.test.tsx",
       "mode": 420,
-      "sha256": "f97be2545a623bcfcbcafd823b27f914d178fd7afcfefabab335e2228d6095ad"
+      "sha256": "6b40efa0a43066bd028c5e9b3cf07a54f1f70efee946f5508b1eaf12116d12b3"
     },
     {
       "path": "packages/remote-web/test/ciphertext-pacer.test.ts",
@@ -2492,7 +2492,7 @@
     {
       "path": "release.json",
       "mode": 420,
-      "sha256": "b005a94261673521fe473ee3371ff97bf8c7727bf6715c3f276a0ae353ed3cb8"
+      "sha256": "34e7efe8999338199885fe8a3a8519b2cc8a106195d1db43a66b3e86568af649"
     },
     {
       "path": "runtime.env.example",

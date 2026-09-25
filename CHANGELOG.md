@@ -1,5 +1,11 @@
 # Gian Remote Changelog
 
+## [1.2.3] - 2026-09-25
+
+- Makes the five mobile composer controls visually consistent while retaining
+  touch-friendly button targets.
+- Moves the context-usage ring next to the model control on Remote Web.
+
 ## [1.2.0] - 2026-09-23
 
 - Adds a separate Host registration page at `/enrollment`. Deployment-configured

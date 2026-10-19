@@ -1025,6 +1025,7 @@ export async function createRemoteApp(config: RemoteServerConfig): Promise<Remot
   app.onError((error, context) => {
     logError(config.logger, error);
     if (error instanceof GitHubUpstreamError) {
+      context.header('Retry-After', String(error.retryAfterSeconds));
       return context.json({ error: { code: 'UPSTREAM_FAILED' } }, 503);
     }
     if (error instanceof RemoteProtocolError) {

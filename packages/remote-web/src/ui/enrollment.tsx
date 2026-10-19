@@ -10,17 +10,25 @@ import { Icon } from './icons.js';
 type Account = { id: string; login: string };
 const PREFIX = '/api/v1/enrollment';
 
+class EnrollmentUnavailableError extends Error {
+  constructor(readonly retryAfterSeconds = 5) { super('githubUnavailable'); }
+}
+
 async function request(path: string, body?: unknown): Promise<Record<string, unknown>> {
-  const response = await fetch(`${PREFIX}${path}`, {
-    method: body === undefined ? 'GET' : 'POST', credentials: 'same-origin', redirect: 'error',
-    headers: { 'content-type': 'application/json' },
-    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
-    signal: AbortSignal.timeout(15_000),
-  });
-  if (!response.ok) throw new Error(response.status === 403 ? 'denied'
-    : response.status === 401 ? 'signedOut'
-    : response.status === 503 ? 'githubUnavailable'
-    : 'failed');
+  let response: Response;
+  try {
+    response = await fetch(`${PREFIX}${path}`, {
+      method: body === undefined ? 'GET' : 'POST', credentials: 'same-origin', redirect: 'error',
+      headers: { 'content-type': 'application/json' },
+      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+      signal: AbortSignal.timeout(15_000),
+    });
+  } catch { throw new EnrollmentUnavailableError(); }
+  if (response.status === 408 || response.status === 429 || response.status >= 500) {
+    const retryAfter = Number(response.headers.get('retry-after'));
+    throw new EnrollmentUnavailableError(Number.isFinite(retryAfter) ? Math.min(60, Math.max(5, retryAfter)) : 5);
+  }
+  if (!response.ok) throw new Error(response.status === 403 ? 'denied' : response.status === 401 ? 'signedOut' : 'failed');
   return response.json() as Promise<Record<string, unknown>>;
 }
 
@@ -71,19 +79,32 @@ export function EnrollmentPage() {
     }
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout>;
+    let retrySeconds = pending.started.interval_seconds;
+    const schedule = (seconds: number) => {
+      timer = setTimeout(() => void poll(), Math.min(seconds * 1000, Math.max(0, pending.started.expires_at - Date.now())));
+    };
     const poll = async () => {
       if (pending.started.expires_at <= Date.now()) { setPending(null); setError('expired'); return; }
       try {
         const result = await request('/account/poll', { protocol: ACCOUNT_PROTOCOL,
           login_id: pending.started.login_id, signature: pending.signature });
         if (cancelled) return;
+        setError('');
         if (result.status === 'authorized') { setAccount(result.account as Account); setPending(null); }
         else if (result.status === 'pending') {
-          timer = setTimeout(() => void poll(), Math.max(5, Number(result.interval_seconds) || 5) * 1000);
+          retrySeconds = Math.max(5, Number(result.interval_seconds) || 5);
+          schedule(retrySeconds);
         } else { setPending(null); setError(result.status === 'denied' ? 'denied' : 'expired'); }
-      } catch { if (!cancelled) { setPending(null); setError('failed'); } }
+      } catch (reason) {
+        if (cancelled) return;
+        if (reason instanceof EnrollmentUnavailableError) {
+          retrySeconds = Math.min(60, Math.max(retrySeconds * 2, reason.retryAfterSeconds));
+          setError('retrying');
+          schedule(retrySeconds);
+        } else { setPending(null); setError('failed'); }
+      }
     };
-    timer = setTimeout(() => void poll(), pending.started.interval_seconds * 1000);
+    schedule(pending.started.interval_seconds);
     return () => { cancelled = true; clearTimeout(timer); };
   }, [pending]);
 
@@ -104,7 +125,10 @@ export function EnrollmentPage() {
       }));
       const signature = await signBytes(pair.privateKey, new TextEncoder().encode(remoteAccountChallengePayload(started.challenge)));
       if (current === generation.current) setPending({ started, signature });
-    } catch (reason) { if (current === generation.current) setError(reason instanceof Error && ['denied', 'githubUnavailable'].includes(reason.message) ? reason.message : 'failed'); }
+    } catch (reason) {
+      if (current === generation.current) setError(reason instanceof EnrollmentUnavailableError ? 'githubUnavailable'
+        : reason instanceof Error && reason.message === 'denied' ? 'denied' : 'failed');
+    }
     finally { if (current === generation.current) setBusy(false); }
   }
   async function generate() {

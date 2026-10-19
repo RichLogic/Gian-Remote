@@ -1,5 +1,17 @@
 # Gian Remote Changelog
 
+## [1.3.0] - 2026-10-19
+
+- Remote Web follows the Host's configured interface language (English or
+  简体中文) once the connection negotiates `wire.host_locale`; Hosts running
+  older Gian versions keep the previous English interface.
+- Transcript rendering corrects bold text adjacent to CJK characters.
+- GitHub device-flow sign-in survives upstream interruptions: temporary
+  GitHub failures return a retryable 503 with `Retry-After` and the poll
+  backs off (RFC 8628) instead of revoking the in-progress authorization.
+- Requires `@gian/remote-protocol` 1.3.0 (published by public Gian); no
+  database migration.
+
 ## [1.2.4] - 2026-09-25
 
 - Reduces the mobile context-usage ring to a compact 20px indicator while

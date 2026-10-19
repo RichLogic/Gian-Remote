@@ -2,6 +2,7 @@ import { isValidElement, useContext, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
+import remarkCjkFriendly from 'remark-cjk-friendly/parseOnly';
 import rehypeKatex from 'rehype-katex';
 import rehypeHighlight from 'rehype-highlight';
 import { useChatUiT } from './i18n.js';
@@ -72,7 +73,7 @@ function mermaidBlockOf(
  *  wrapper stays so the copy button still copies the diagram source. */
 function MarkdownPre({ children }: { node?: unknown; children?: React.ReactNode }) {
   const t = useChatUiT();
-  const code = reactNodeText(children).replace(/\n+$/, '');
+  const code = reactNodeText(children).replace(/\n$/, '');
   const mermaid = mermaidBlockOf(children, code);
   if (mermaid) {
     return (
@@ -103,8 +104,43 @@ function MarkdownTable({ children }: { node?: unknown; children?: React.ReactNod
 
 interface MarkdownBoundaryNode {
   type: string;
+  tagName?: string;
   value?: string;
   children?: MarkdownBoundaryNode[];
+}
+
+/**
+ * mdast-util-to-hast pretty-prints `\n` whitespace text nodes between block
+ * children (`<ol>\n<li>…</li>\n</ol>\n<p>…`). Under normal white-space
+ * (assistant bubbles) they collapse away, but the user bubble is pre-wrap, so
+ * each renders as a phantom empty line around lists, quotes and tables. Drop
+ * them where HTML whitespace is semantically insignificant — block containers
+ * only. Inline contexts (`p`, cells, code) keep every whitespace node: a
+ * whitespace-only run between inline elements is a real space or soft break.
+ */
+const INSIGNIFICANT_WHITESPACE_PARENTS = new Set([
+  'ul', 'ol', 'li', 'blockquote', 'dl', 'table', 'thead', 'tbody', 'tfoot', 'tr',
+]);
+
+function rehypeTightBlockWhitespace() {
+  const visit = (node: MarkdownBoundaryNode, blockParent: boolean) => {
+    if (!node.children) return;
+    if (blockParent) {
+      node.children = node.children.filter(child =>
+        child.type !== 'text' || !child.value?.includes('\n') || child.value.trim() !== '');
+    }
+    // HAST inserts a layout newline after <br>. The break already carries
+    // the line boundary; retaining both doubles it in pre-wrap user text.
+    node.children.forEach((child, index) => {
+      if (child.type === 'text' && child.value?.startsWith('\n')
+        && node.children?.[index - 1]?.tagName === 'br') child.value = child.value.slice(1);
+    });
+    for (const child of node.children) {
+      visit(child, child.type === 'element'
+        && INSIGNIFICANT_WHITESPACE_PARENTS.has((child as { tagName?: string }).tagName ?? ''));
+    }
+  };
+  return (tree: MarkdownBoundaryNode) => visit(tree, true);
 }
 
 function remarkBoundarySpaces({ source }: { source: string }) {
@@ -128,34 +164,102 @@ function remarkBoundarySpaces({ source }: { source: string }) {
   };
 }
 
-export function MarkdownText({ children, preserveBoundarySpaces = false }: { children: string; preserveBoundarySpaces?: boolean }) {
+/**
+ * Inline slot placeholders let a caller splice interactive React widgets INTO
+ * the markdown flow. The token (private-use chars, so it parses as plain
+ * text) marks a widget's position inside the source; the rehype pass swaps
+ * each token for an <md-slot> element carrying the widget index as its text
+ * child, and the components map hands the index to `renderSlot`. Because the
+ * whole source parses as one document, block constructs (lists, headings,
+ * quotes) that span a widget stay intact instead of splitting at the widget
+ * boundary. Tokens inside code/pre stay literal.
+ */
+const SLOT_TOKEN_RE = /\uE000(\d+)\uE001/g;
+
+export function inlineSlotToken(index: number): string {
+  return `\uE000${index}\uE001`;
+}
+
+interface SlotTreeNode {
+  type: string;
+  tagName?: string;
+  value?: string;
+  properties?: Record<string, unknown>;
+  children?: SlotTreeNode[];
+}
+
+function rehypeInlineSlots() {
+  const visit = (node: SlotTreeNode, skip: boolean) => {
+    if (!node.children) return;
+    const skipHere = skip || (node.type === 'element' && (node.tagName === 'pre' || node.tagName === 'code'));
+    const next: SlotTreeNode[] = [];
+    for (const child of node.children) {
+      if (!skipHere && child.type === 'text' && child.value?.includes('\uE000')) {
+        SLOT_TOKEN_RE.lastIndex = 0;
+        let cursor = 0;
+        let match: RegExpExecArray | null;
+        while ((match = SLOT_TOKEN_RE.exec(child.value))) {
+          if (match.index > cursor) next.push({ type: 'text', value: child.value.slice(cursor, match.index) });
+          next.push({ type: 'element', tagName: 'md-slot', properties: {}, children: [{ type: 'text', value: match[1] ?? '0' }] });
+          cursor = match.index + match[0].length;
+        }
+        if (cursor < child.value.length) next.push({ type: 'text', value: child.value.slice(cursor) });
+      } else {
+        next.push(child);
+      }
+    }
+    node.children = next;
+    for (const child of node.children) visit(child, skipHere);
+  };
+  return (tree: SlotTreeNode) => visit(tree, false);
+}
+
+export function MarkdownText({ children, preserveBoundarySpaces = false, renderSlot }: {
+  children: string;
+  preserveBoundarySpaces?: boolean;
+  /** Renders inline slot tokens (see inlineSlotToken) as widgets spliced into
+   *  the markdown flow; the slot element's text child carries the index. */
+  renderSlot?: (index: number) => React.ReactNode;
+}) {
   const makeRehype = useContext(FileRefRehypeContext);
   const rehypePlugins = useMemo(
     () => [
+      rehypeTightBlockWhitespace,
       rehypeKatex,
       // Tagged languages only (`detect: false`); mermaid stays unhighlighted
       // so the `code` override sees the raw diagram source.
       [rehypeHighlight, { detect: false, plainText: ['mermaid'] }],
       ...(makeRehype ? [makeRehype] : []),
+      ...(renderSlot ? [rehypeInlineSlots] : []),
     ],
-    [makeRehype],
+    [makeRehype, renderSlot],
   );
   // Repair spec-invalid table patterns models emit constantly (header glued
   // to a list item, delimiter/header cell-count mismatch) before remark sees
   // them — otherwise the table silently renders as raw pipe text.
   const source = useMemo(() => normalizeGfmTables(children), [children]);
+  // The components object (and the md-slot closure) must keep a stable
+  // identity across renders — a fresh component type would make React
+  // unmount/remount every chip subtree, detaching the very DOM nodes the
+  // chip hover/click handlers and popover anchors point at.
+  const components = useMemo(() => ({
+    a: LinkAnchor as never,
+    pre: MarkdownPre as never,
+    code: MarkdownCode as never,
+    table: MarkdownTable as never,
+    ...(renderSlot ? {
+      'md-slot': (({ children: slotChildren }: { children?: React.ReactNode }) => (
+        <>{renderSlot(Number(reactNodeText(slotChildren)))}</>
+      )) as never,
+    } : {}),
+  }), [renderSlot]);
   return (
     <ReactMarkdown
       remarkPlugins={preserveBoundarySpaces
-        ? [remarkGfm, remarkMath, [remarkBoundarySpaces, { source }]]
-        : [remarkGfm, remarkMath]}
+        ? [remarkGfm, remarkMath, remarkCjkFriendly, [remarkBoundarySpaces, { source }]]
+        : [remarkGfm, remarkMath, remarkCjkFriendly]}
       rehypePlugins={rehypePlugins as never}
-      components={{
-        a: LinkAnchor as never,
-        pre: MarkdownPre as never,
-        code: MarkdownCode as never,
-        table: MarkdownTable as never,
-      }}
+      components={components}
     >
       {source}
     </ReactMarkdown>

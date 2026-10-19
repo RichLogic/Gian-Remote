@@ -178,7 +178,7 @@ export interface ApprovalItem {
   reason: string;
   cmd: string;
   risk: 'low' | 'medium' | 'high';
-  status: 'pending' | 'approved-once' | 'approved-session' | 'declined';
+  status: 'pending' | 'approved-once' | 'approved-session' | 'declined' | 'resolved';
   /** 'question' = AskUserQuestion-flavored approval; UI renders structured
    *  options instead of generic allow/decline. Otherwise undefined. */
   category?: import('@gian/shared').ApprovalCategory;
@@ -200,6 +200,8 @@ export interface ApprovalItem {
   actions?: import('@gian/shared').InteractionAction[];
   /** gian.proxy/2.0 inputs — when present, collect values with the submit action. */
   inputs?: import('@gian/shared').InteractionInput[];
+  /** Proxy-declared cancellation may omit required answers; absent keeps legacy validation. */
+  cancelInputOptionalActions?: string[];
   /** True when `cmd` came from the interaction's `context.subject` (a tool
    *  name / command / path) rather than the prose title — drives mono-block
    *  vs prose-text rendering on the unified interaction card. */
@@ -242,6 +244,8 @@ export interface DiffItem {
   kind: 'diff';
   id: string;
   files: DiffFile[];
+  /** Runtime launch root used to identify absolute/relative file aliases. */
+  cwd?: string;
   ts: number;
   turn: number;
 }

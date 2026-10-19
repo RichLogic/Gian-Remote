@@ -6,6 +6,7 @@ export interface RemoteAccountCredential {
   installationId: string;
   accountId: string;
   accountLogin: string;
+  /** Opaque session secret minted by this Remote Server, NOT a GitHub OAuth token. */
   token: string;
   expiresAt: number;
 }

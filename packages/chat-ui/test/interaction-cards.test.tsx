@@ -31,6 +31,32 @@ describe('ApprovalCard — generic permission', () => {
     expect(screen.queryByText('Allow session')).toBeNull();
   });
 
+  it('a locked card disables every action and shows the reason', () => {
+    render(<ApprovalCard item={approval()} onApprove={vi.fn()} lockedReason="Archived read-only" />);
+    expect(screen.getByText('Archived read-only')).toBeInTheDocument();
+    for (const btn of screen.getAllByRole('button')) expect(btn).toBeDisabled();
+  });
+
+  it('carries the stable interaction anchor for deep navigation', () => {
+    const { container } = render(<ApprovalCard item={approval()} onApprove={vi.fn()} />);
+    expect(container.querySelector('[data-transcript-interaction-id="ap-1"]')).not.toBeNull();
+  });
+
+  it('the resolved one-liner keeps the same anchor', () => {
+    const { container } = render(<ApprovalLine item={approval({ status: 'approved-once' })} />);
+    expect(container.querySelector('[data-transcript-interaction-id="ap-1"]')).not.toBeNull();
+  });
+
+  it('an unknown outcome renders a neutral resolved line, never an allow mark', () => {
+    const { container } = render(<ApprovalLine item={approval({ status: 'resolved' })} />);
+    const mark = container.querySelector('.al-mark')!;
+    expect(mark.textContent).toBe('·');
+    expect(mark.classList.contains('ok')).toBe(false);
+    expect(mark.classList.contains('no')).toBe(false);
+    expect(container.querySelector('.approval-line')!.textContent).toContain('Resolved');
+    expect(container.querySelector('.approval-line')!.textContent).not.toContain('Allowed');
+  });
+
   it('decisions report the approval id + decision through onApprove', async () => {
     const user = userEvent.setup();
     const onApprove = vi.fn();
@@ -59,6 +85,21 @@ describe('ApprovalCard — generic permission', () => {
 });
 
 describe('ApprovalCard — protocol (gian.proxy/2.0) path', () => {
+  it('allows native question dismissal without inventing a required answer', async () => {
+    const onApprove = vi.fn();
+    render(<ApprovalCard item={approval({
+      cmd: '', interactionKind: 'question', category: 'other', cancelInputOptionalActions: ['decline'],
+      inputs: [{ id: 'choice', type: 'single_select', label: 'Choice', required: true,
+        choices: [{ value: 'a', displayName: 'A' }] }],
+      actions: [{ id: 'accept', label: 'Submit', style: 'primary' },
+        { id: 'decline', label: 'Dismiss', style: 'danger' }],
+    })} onApprove={onApprove} />);
+    expect(screen.getByText('Submit')).toBeDisabled();
+    expect(screen.getByText('Dismiss')).toBeEnabled();
+    await userEvent.setup().click(screen.getByText('Dismiss'));
+    expect(onApprove).toHaveBeenCalledWith('ap-1', 'decline', undefined,
+      { category: 'other', nativeOptionId: 'decline' });
+  });
   it('renders verbatim action buttons, danger pinned last, primary degraded to secondary', async () => {
     const user = userEvent.setup();
     const onApprove = vi.fn();
@@ -81,6 +122,47 @@ describe('ApprovalCard — protocol (gian.proxy/2.0) path', () => {
     await user.click(screen.getByText('No'));
     expect(onApprove).toHaveBeenCalledWith('ap-1', 'decline', undefined, { category: 'other', nativeOptionId: 'reject_once' });
     expect(container.querySelector('.ap2-kind')!.textContent).toBe('Approval');
+  });
+
+  it('uses the declared cancellation meaning of an opaque action ID', async () => {
+    const onApprove = vi.fn();
+    render(<ApprovalCard item={approval({ cmd: '', category: 'other', interactionKind: 'question',
+      cancelInputOptionalActions: ['opaque-native-action-42'],
+      inputs: [{ id: 'answer', type: 'text', label: 'Answer', required: true }],
+      actions: [{ id: 'opaque-native-action-42', label: 'Dismiss', style: 'danger' }],
+    })} onApprove={onApprove} />);
+    const dismiss = screen.getByRole('button', { name: 'Dismiss' });
+    expect(dismiss).toBeEnabled();
+    await userEvent.setup().click(dismiss);
+    expect(onApprove).toHaveBeenCalledWith('ap-1', 'decline', undefined,
+      { category: 'other', nativeOptionId: 'opaque-native-action-42' });
+  });
+
+  it('preserves the legacy required-answer guard when the Proxy has not opted in', () => {
+    render(<ApprovalCard item={approval({ cmd: '', category: 'question',
+      inputs: [{ id: 'choice', type: 'single_select', label: 'Choice', required: true,
+        choices: [{ value: 'a', displayName: 'A' }] }],
+      actions: [{ id: 'decline', label: 'Dismiss', style: 'danger' }],
+    })} onApprove={vi.fn()} />);
+    expect(screen.getByRole('button', { name: 'Dismiss' })).toBeDisabled();
+  });
+
+  it('requires feedback for rejection actions that are not cancellation', async () => {
+    const user = userEvent.setup();
+    const onApprove = vi.fn();
+    render(<ApprovalCard item={approval({ cmd: '', category: 'question', cancelInputOptionalActions: ['cancel'],
+      inputs: [{ id: 'feedback', type: 'multiline_text', label: 'Feedback', required: true }],
+      actions: [{ id: 'reject_with_feedback', label: 'Revise with feedback', style: 'danger' },
+        { id: 'cancel', label: 'Cancel', style: 'danger' }],
+    })} onApprove={onApprove} />);
+    const revise = screen.getByRole('button', { name: 'Revise with feedback' });
+    expect(revise).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Cancel' })).toBeEnabled();
+    await user.type(screen.getByRole('textbox'), 'Please revise the plan');
+    expect(revise).toBeEnabled();
+    await user.click(revise);
+    expect(onApprove).toHaveBeenCalledWith('ap-1', 'decline', { feedback: 'Please revise the plan' },
+      { category: 'question', nativeOptionId: 'reject_with_feedback' });
   });
 
   it('question interactionKind drives the card label; required inputs gate the buttons', async () => {

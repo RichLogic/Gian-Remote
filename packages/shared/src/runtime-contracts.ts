@@ -18,6 +18,17 @@ import { isSessionProxyBinding, isSessionRuntimeProfile } from './session-proxy-
 import { normalizeBrowserElementCapture } from './browser-context.js';
 import { normalizeComposerDocument } from './context.js';
 import type { ListNativeSessionsResponse, NativeSession } from './native.js';
+import { isInboxSyncSnapshot } from './inbox.js';
+import {
+  isAttentionControlMessage,
+  isAttentionLookupMessage,
+  isAttentionMessage,
+} from './attention.js';
+import type {
+  AttentionControlMessage,
+  AttentionLookupMessage,
+  AttentionMessage,
+} from './attention.js';
 import type { RunnerInfo, StateSyncMessage } from './web.js';
 
 type UnknownRecord = Record<string, unknown>;
@@ -388,7 +399,8 @@ export function isStateSyncMessage(value: unknown): value is StateSyncMessage {
     && isArrayOf(value.workspaces, isWorkspace)
     && isArrayOf(value.tasks, isTask)
     && isArrayOf(value.approvals, isApproval)
-    && isSystemConfig(value.config);
+    && isSystemConfig(value.config)
+    && isOptional(value, 'inbox', isInboxSyncSnapshot);
 }
 
 /** Runtime contract for a native CLI session returned by the Host REST API. */
@@ -449,4 +461,19 @@ export function parseSideChatInfo(value: unknown): SideChatInfo {
 
 export function parseListNativeSessionsResponse(value: unknown): ListNativeSessionsResponse {
   return parseContract(value, 'ListNativeSessionsResponse', isListNativeSessionsResponse);
+}
+
+/** Attention socket frames. Rejects transcript and Inbox bodies. */
+export function parseAttentionServerFrame(value: unknown): AttentionMessage | AttentionControlMessage {
+  return parseContract(
+    value,
+    'AttentionServerFrame',
+    (candidate): candidate is AttentionMessage | AttentionControlMessage => (
+      isAttentionMessage(candidate) || isAttentionControlMessage(candidate)
+    ),
+  );
+}
+
+export function parseAttentionLookup(value: unknown): AttentionLookupMessage {
+  return parseContract(value, 'AttentionLookupMessage', isAttentionLookupMessage);
 }

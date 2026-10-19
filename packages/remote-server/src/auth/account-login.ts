@@ -23,11 +23,14 @@ interface Login {
   cancelled?: boolean;
 }
 
-/** The GitHub upstream call itself failed (HTTP error, timeout, malformed or
- *  rate-limited response). This is NOT an authorization failure — callers map
- *  it to a retryable 503 instead of a misleading 401. */
+/** Upstream failures are retryable availability errors, never proof of bad credentials. */
 export class GitHubUpstreamError extends Error {
-  constructor() { super('GitHub authorization is temporarily unavailable'); }
+  readonly retryAfterSeconds: number;
+  constructor(retryAfterSeconds = 5) {
+    super('GitHub authorization is temporarily unavailable');
+    this.retryAfterSeconds = Number.isFinite(retryAfterSeconds)
+      ? Math.min(60, Math.max(5, Math.ceil(retryAfterSeconds))) : 5;
+  }
 }
 
 /** GitHub tokens exist only during this Server-owned exchange. Clients see
@@ -89,7 +92,16 @@ export class RemoteAccountLogin {
     if (login.inFlight) return login.inFlight;
     if (this.now() < login.nextPollAt) return this.waiting(login);
     login.nextPollAt = this.now() + login.interval * 1000;
-    const request = this.exchange(login, signature).finally(() => { login.inFlight = undefined; });
+    const request = this.exchange(login, signature).catch(error => {
+      if (error instanceof GitHubUpstreamError) {
+        // RFC 8628: connection timeouts reduce polling frequency, not revoke
+        // the authorization the user is still completing in their browser.
+        login.interval = Math.min(60, Math.max(login.interval * 2, error.retryAfterSeconds));
+        login.nextPollAt = this.now() + login.interval * 1000;
+        throw new GitHubUpstreamError(login.interval);
+      }
+      throw error;
+    }).finally(() => { login.inFlight = undefined; });
     login.inFlight = request;
     return request;
   }
@@ -159,13 +171,16 @@ export class RemoteAccountLogin {
   }
 
   private async github(url: string, params: Record<string, string>): Promise<Record<string, unknown>> {
+    let response: Response;
     try {
-      const response = await this.fetchImpl(url, {
+      response = await this.fetchImpl(url, {
         method: 'POST', redirect: 'error', signal: AbortSignal.timeout(10_000),
         headers: { accept: 'application/json', 'content-type': 'application/x-www-form-urlencoded', 'user-agent': 'Gian-Remote' },
         body: new URLSearchParams(params),
       });
-      if (!response.ok) throw new GitHubUpstreamError();
+    } catch { throw new GitHubUpstreamError(); }
+    if (!response.ok) throw new GitHubUpstreamError(Number(response.headers.get('retry-after')) || 5);
+    try {
       const value: unknown = await response.json();
       if (!value || typeof value !== 'object' || Array.isArray(value)) throw new GitHubUpstreamError();
       return value as Record<string, unknown>;

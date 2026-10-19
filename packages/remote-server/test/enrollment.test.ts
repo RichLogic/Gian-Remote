@@ -22,6 +22,78 @@ async function enrollmentLogin(f: Awaited<ReturnType<typeof makeRemoteTestApp>>)
   }));
 }
 
+test('GitHub transport failure is unavailable, not bad credentials, and never leaks upstream errors', async () => {
+  const f = await makeRemoteTestApp({ config: { githubFetch: async () => { throw new Error('private-upstream-fixture'); } } });
+  try {
+    const keys = await generateP256SigningKeyPair();
+    const response = await f.fetch('/api/v1/enrollment/account/start', post({ protocol: ACCOUNT_PROTOCOL,
+      peer: { role: 'controller', installation_id: generateCanonicalId(), public_key: await exportPublicJwk(keys.publicKey) } }));
+    assert.equal(response.status, 503);
+    assert.equal(response.headers.get('retry-after'), '5');
+    assert.equal((await response.json() as { error: { code: string } }).error.code, 'UPSTREAM_FAILED');
+    assert.doesNotMatch(f.logs.join('\n'), /private-upstream-fixture/);
+    assert.equal(f.handle.services.db.prepare('SELECT * FROM enrollment_sessions').get(), undefined);
+  } finally { f.handle.shutdown(); }
+});
+
+test('enrollment keeps the same signed login through timeout and rate limiting, with backoff and no deadline extension', async () => {
+  let mode: 'timeout' | 'rate' | 'authorized' = 'timeout';
+  let polls = 0;
+  const f = await makeRemoteTestApp({ config: { githubFetch: async url => {
+    if (String(url).endsWith('/login/device/code')) return Response.json({ device_code: 'fixture-device', user_code: 'CODE',
+      verification_uri: 'https://github.com/login/device', expires_in: 900, interval: 5 });
+    if (String(url).endsWith('/login/oauth/access_token')) {
+      polls += 1;
+      if (mode === 'timeout') throw new TypeError('connect timeout');
+      if (mode === 'rate') return new Response('{}', { status: 429, headers: { 'retry-after': '30' } });
+      return Response.json({ access_token: 'fixture-access-token', token_type: 'bearer' });
+    }
+    return Response.json({ id: 42, login: 'owner', type: 'User' });
+  } } });
+  try {
+    const keys = await generateP256SigningKeyPair();
+    const started = accountLoginStartedSchema.parse(await (await f.fetch('/api/v1/enrollment/account/start', post({
+      protocol: ACCOUNT_PROTOCOL, peer: { role: 'controller', installation_id: generateCanonicalId(), public_key: await exportPublicJwk(keys.publicKey) },
+    }))).json());
+    const proof = { protocol: ACCOUNT_PROTOCOL, login_id: started.login_id,
+      signature: await signBytes(keys.privateKey, new TextEncoder().encode(remoteAccountChallengePayload(started.challenge))) };
+    const poll = () => f.fetch('/api/v1/enrollment/account/poll', post(proof));
+    const unavailable = await poll();
+    assert.equal(unavailable.status, 503);
+    assert.equal(unavailable.headers.get('retry-after'), '10');
+    assert.equal(unavailable.headers.get('set-cookie'), null);
+    assert.equal((await (await poll()).json() as { status: string }).status, 'pending');
+    assert.equal(polls, 1, 'early retries never hit GitHub');
+    f.clock.tick(10_000);
+    mode = 'rate';
+    const limited = await poll();
+    assert.equal(limited.status, 503);
+    assert.equal(limited.headers.get('retry-after'), '30');
+    f.clock.tick(29_999);
+    assert.equal((await (await poll()).json() as { status: string }).status, 'pending');
+    assert.equal(polls, 2);
+    f.clock.tick(1);
+    mode = 'authorized';
+    const accepted = await poll();
+    assert.equal((await accepted.json() as { status: string }).status, 'authorized');
+    assert.ok(accepted.headers.get('set-cookie'));
+    assert.equal(polls, 3);
+
+    mode = 'timeout';
+    const second = accountLoginStartedSchema.parse(await (await f.fetch('/api/v1/enrollment/account/start', post({
+      protocol: ACCOUNT_PROTOCOL, peer: { role: 'controller', installation_id: generateCanonicalId(), public_key: await exportPublicJwk(keys.publicKey) },
+    }))).json());
+    const secondProof = { protocol: ACCOUNT_PROTOCOL, login_id: second.login_id,
+      signature: await signBytes(keys.privateKey, new TextEncoder().encode(remoteAccountChallengePayload(second.challenge))) };
+    assert.equal((await f.fetch('/api/v1/enrollment/account/poll', post(secondProof))).status, 503);
+    f.clock.tick(second.expires_at - f.clock.now);
+    const expired = await f.fetch('/api/v1/enrollment/account/poll', post(secondProof));
+    assert.equal((await expired.json() as { status: string }).status, 'expired');
+    assert.equal(expired.headers.get('set-cookie'), null);
+    assert.equal(polls, 4, 'expiry stops retries rather than extending the login');
+  } finally { f.handle.shutdown(); }
+});
+
 test('enrollment allowlist is configurable, numeric, deduplicated and default-deny', async () => {
   assert.deepEqual(parseEnrollmentGithubIds(undefined), []);
   assert.deepEqual(parseEnrollmentGithubIds('42, 99,42'), ['42', '99']);
